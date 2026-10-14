@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.Graphics2D;
+import java.util.List;
 
 public abstract class Character implements SkillAction {
     private String id;
@@ -28,6 +29,10 @@ public abstract class Character implements SkillAction {
     public int ultCdMax = 600;
     public int ultCdCurrent = 0;
 
+    // Invincibility Frames (Kebal sementara setelah terkena serangan)
+    public int iFrameTimer = 0;
+    public static final int IFRAME_DURATION = 35; // ~0.58 detik kebal
+
     public Character(String id, String name, String rarity, int maxHp, int attack, int defense) {
         this.id = id;
         this.name = name;
@@ -47,13 +52,14 @@ public abstract class Character implements SkillAction {
         x += vx;
         y += vy;
 
-        // Boundary limit arena
+        // Batas arena
         x = Math.max(20, Math.min(880, x));
         y = Math.max(20, Math.min(540, y));
 
         // Cooldown tick
         if (skillCdCurrent > 0) skillCdCurrent--;
         if (ultCdCurrent > 0) ultCdCurrent--;
+        if (iFrameTimer > 0) iFrameTimer--;
     }
 
     public void gainExp(int amount) {
@@ -75,8 +81,17 @@ public abstract class Character implements SkillAction {
     }
 
     public void takeDamage(int dmg) {
-        int finalDmg = Math.max(1, dmg - (defense / 3));
+        // Abaikan damage jika masih dalam masa kebal (I-Frame)
+        if (iFrameTimer > 0) return;
+
+        int finalDmg = Math.max(5, dmg - (defense / 3));
         this.currentHp = Math.max(0, this.currentHp - finalDmg);
+        this.iFrameTimer = IFRAME_DURATION; // Aktifkan waktu kebal
+    }
+
+    public void reviveFull() {
+        this.currentHp = this.maxHp;
+        this.iFrameTimer = 0;
     }
 
     public abstract void draw(Graphics2D g2);

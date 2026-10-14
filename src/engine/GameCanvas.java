@@ -25,7 +25,7 @@ public class GameCanvas extends JPanel {
     private InputHandler input;
     private List<Enemy> enemies;
 
-    // UI Buttons untuk Menu
+    // UI Buttons
     private UIButton btnStartGame;
     private UIButton btnQuitGame;
     private UIButton btnGoBattle;
@@ -34,9 +34,11 @@ public class GameCanvas extends JPanel {
     private UIButton btnBackToLobby;
     private UIButton btnPull1x;
     private UIButton btnPull10x;
+    private UIButton btnEndReturnHub;
 
-    // State notifikasi gacha terakhir
     private String lastGachaNotice = "";
+    private int victoryGemsGained = 0;
+    private int victoryCreditsGained = 0;
 
     public GameCanvas(PartyManager partyManager, StageManager stageManager, PlayerProfile profile, GachaService gacha, InputHandler input) {
         this.partyManager = partyManager;
@@ -51,7 +53,6 @@ public class GameCanvas extends JPanel {
         setFocusable(true);
         addKeyListener(input);
 
-        // Pasang Mouse Listener dari InputHandler
         MouseAdapter mouse = input.getMouseListener();
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -61,19 +62,18 @@ public class GameCanvas extends JPanel {
     }
 
     private void initButtons() {
-        // Title Screen Buttons
-        btnStartGame = new UIButton(375, 320, 200, 45, "ENTER GAME", new Color(41, 128, 185), new Color(52, 152, 219));
-        btnQuitGame  = new UIButton(375, 380, 200, 45, "EXIT", new Color(192, 57, 43), new Color(231, 76, 60));
+        btnStartGame    = new UIButton(375, 320, 200, 45, "ENTER GAME", new Color(41, 128, 185), new Color(52, 152, 219));
+        btnQuitGame     = new UIButton(375, 380, 200, 45, "EXIT", new Color(192, 57, 43), new Color(231, 76, 60));
 
-        // Lobby Hub Buttons
-        btnGoBattle  = new UIButton(100, 460, 220, 50, "ENTER BATTLE ARENA", new Color(192, 57, 43), new Color(231, 76, 60));
-        btnGoGacha   = new UIButton(365, 460, 220, 50, "GACHA PORTAL", new Color(142, 68, 173), new Color(155, 89, 182));
-        btnGoParty   = new UIButton(630, 460, 220, 50, "PARTY FORMATION", new Color(39, 174, 96), new Color(46, 204, 113));
+        btnGoBattle     = new UIButton(100, 460, 220, 50, "ENTER BATTLE ARENA", new Color(192, 57, 43), new Color(231, 76, 60));
+        btnGoGacha      = new UIButton(365, 460, 220, 50, "GACHA PORTAL", new Color(142, 68, 173), new Color(155, 89, 182));
+        btnGoParty      = new UIButton(630, 460, 220, 50, "PARTY FORMATION", new Color(39, 174, 96), new Color(46, 204, 113));
 
-        // Back / Action Buttons
-        btnBackToLobby = new UIButton(780, 25, 140, 35, "< BACK TO HUB", new Color(52, 73, 94), new Color(44, 62, 80));
-        btnPull1x      = new UIButton(280, 450, 180, 45, "PULL 1x (160 Gems)", new Color(142, 68, 173), new Color(155, 89, 182));
-        btnPull10x     = new UIButton(490, 450, 180, 45, "PULL 10x (1600 Gems)", new Color(211, 84, 0), new Color(230, 126, 34));
+        btnBackToLobby  = new UIButton(780, 25, 140, 35, "< BACK TO HUB", new Color(52, 73, 94), new Color(44, 62, 80));
+        btnEndReturnHub = new UIButton(375, 400, 200, 45, "RETURN TO HUB", new Color(41, 128, 185), new Color(52, 152, 219));
+
+        btnPull1x       = new UIButton(280, 450, 180, 45, "PULL 1x (160 Gems)", new Color(142, 68, 173), new Color(155, 89, 182));
+        btnPull10x      = new UIButton(490, 450, 180, 45, "PULL 10x (1600 Gems)", new Color(211, 84, 0), new Color(230, 126, 34));
     }
 
     private void spawnCreeps() {
@@ -88,7 +88,6 @@ public class GameCanvas extends JPanel {
     public void updateState() {
         Point mouse = input.mousePosition;
 
-        // 1. UPDATE STATE MENU / CLICKS
         switch (currentState) {
             case TITLE:
                 btnStartGame.checkHover(mouse);
@@ -168,9 +167,11 @@ public class GameCanvas extends JPanel {
 
             case VICTORY:
             case GAME_OVER:
-                btnBackToLobby.checkHover(mouse);
+                btnEndReturnHub.checkHover(mouse);
                 if (input.mouseClicked) {
-                    if (btnBackToLobby.contains(mouse)) {
+                    if (btnEndReturnHub.contains(mouse)) {
+                        partyManager.reviveAllParty();
+                        spawnCreeps();
                         currentState = GameState.LOBBY;
                     }
                     input.mouseClicked = false;
@@ -202,9 +203,27 @@ public class GameCanvas extends JPanel {
 
     private void updateBattlePhysics() {
         Character activeHero = partyManager.getActiveHero();
-        if (activeHero == null) return;
 
-        // Switch Hero 1 - 5
+        // 1. Cek jika hero aktif mati -> Otomatis alihkan ke anggota party lain yang masih hidup
+        if (activeHero == null || !activeHero.isAlive()) {
+            boolean foundReplacement = false;
+            for (int i = 0; i < partyManager.getActiveParty().size(); i++) {
+                if (partyManager.getActiveParty().get(i).isAlive()) {
+                    partyManager.switchHero(i);
+                    activeHero = partyManager.getActiveHero();
+                    foundReplacement = true;
+                    break;
+                }
+            }
+
+            // Jika tidak ada lagi hero yang hidup -> GAME OVER
+            if (!foundReplacement || partyManager.isAllPartyDead()) {
+                currentState = GameState.GAME_OVER;
+                return;
+            }
+        }
+
+        // Switch Hero 1 - 5 manual
         if (input.selectedHeroSlot != -1) {
             partyManager.switchHero(input.selectedHeroSlot);
             input.selectedHeroSlot = -1;
@@ -245,18 +264,23 @@ public class GameCanvas extends JPanel {
 
             float dist = (float) Math.hypot(en.x - activeHero.x, en.y - activeHero.y);
             if (dist < (en.size / 2.0f + activeHero.size / 2.0f)) {
-                activeHero.takeDamage(en.attack / 8);
+                activeHero.takeDamage(en.attack);
             }
 
             if (en.currentHp <= 0) {
                 activeHero.gainExp(en.expReward);
-                playerProfile.addGems(en.isBoss ? 200 : 15);
-                playerProfile.addCredits(en.isBoss ? 1000 : 100);
+                int gGained = en.isBoss ? 300 : 20;
+                int cGained = en.isBoss ? 1500 : 120;
+                playerProfile.addGems(gGained);
+                playerProfile.addCredits(cGained);
 
                 if (en.isBoss) {
+                    victoryGemsGained = gGained;
+                    victoryCreditsGained = cGained;
                     stageManager.onBossDefeated();
-                    spawnCreeps();
-                    break;
+                    it.remove();
+                    currentState = GameState.VICTORY; // Transisi ke Layar Menang
+                    return;
                 } else {
                     stageManager.onCreepKilled();
                 }
@@ -292,8 +316,10 @@ public class GameCanvas extends JPanel {
                 renderBattleScreen(g2);
                 break;
             case VICTORY:
+                renderEndScreen(g2, true);
+                break;
             case GAME_OVER:
-                renderEndScreen(g2, currentState == GameState.VICTORY);
+                renderEndScreen(g2, false);
                 break;
             default:
                 break;
@@ -342,7 +368,8 @@ public class GameCanvas extends JPanel {
             g2.setFont(new Font("SansSerif", Font.BOLD, 22));
             g2.drawString(leader.getName() + " [" + leader.getRarity() + " " + leader.getRole() + "]", 340, 195);
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
-            g2.drawString(String.format("Level: %d | HP: %d | ATK: %d | DEF: %d", leader.getLevel(), leader.getMaxHp(), leader.getAttack(), leader.getDefense()), 310, 230);
+            g2.drawString(String.format("Level: %d | HP: %d/%d | ATK: %d | DEF: %d", 
+                    leader.getLevel(), leader.getCurrentHp(), leader.getMaxHp(), leader.getAttack(), leader.getDefense()), 300, 230);
 
             leader.x = 475; leader.y = 320;
             leader.draw(g2);
@@ -414,7 +441,7 @@ public class GameCanvas extends JPanel {
                 g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
                 g2.drawString("Role: " + c.getRole(), cardX + 15, cardY + 100);
                 g2.drawString("Level: " + c.getLevel(), cardX + 15, cardY + 125);
-                g2.drawString("HP: " + c.getMaxHp(), cardX + 15, cardY + 150);
+                g2.drawString("HP: " + c.getCurrentHp() + "/" + c.getMaxHp(), cardX + 15, cardY + 150);
                 g2.drawString("ATK: " + c.getAttack(), cardX + 15, cardY + 175);
                 g2.drawString("DEF: " + c.getDefense(), cardX + 15, cardY + 200);
             } else {
@@ -435,7 +462,10 @@ public class GameCanvas extends JPanel {
 
         Character activeHero = partyManager.getActiveHero();
         if (activeHero != null && activeHero.isAlive()) {
-            activeHero.draw(g2);
+            // Efek kedip saat terkena damage (I-Frame active)
+            if (activeHero.iFrameTimer % 4 < 2) {
+                activeHero.draw(g2);
+            }
         }
 
         MainHUD.draw(g2, activeHero, partyManager, stageManager, enemies);
@@ -447,18 +477,34 @@ public class GameCanvas extends JPanel {
     }
 
     private void renderEndScreen(Graphics2D g2, boolean victory) {
-        g2.setColor(new Color(0, 0, 0, 200));
+        g2.setColor(new Color(0, 0, 0, 220));
         g2.fillRect(0, 0, 950, 600);
 
-        g2.setFont(new Font("SansSerif", Font.BOLD, 36));
+        g2.setFont(new Font("SansSerif", Font.BOLD, 40));
         if (victory) {
             g2.setColor(new Color(46, 204, 113));
-            g2.drawString("STAGE CLEARED!", 330, 250);
+            g2.drawString("STAGE CLEARED!", 310, 200);
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            g2.drawString("Stage Boss Berhasil Ditumbangkan!", 335, 245);
+
+            g2.setColor(new Color(0, 210, 255));
+            g2.drawString("+ " + victoryGemsGained + " Cyber Gems", 400, 290);
+            g2.setColor(new Color(255, 204, 0));
+            g2.drawString("+ " + victoryCreditsGained + " Credits", 420, 325);
+            g2.setColor(Color.GREEN);
+            g2.drawString("Stage Berikutnya Terbuka: Stage " + stageManager.getCurrentStage(), 310, 360);
         } else {
             g2.setColor(new Color(231, 76, 60));
-            g2.drawString("PARTY DEFEATED!", 320, 250);
+            g2.drawString("ALL PARTY DEFEATED!", 260, 220);
+
+            g2.setColor(Color.LIGHT_GRAY);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            g2.drawString("Seluruh anggota regu tempur telah gugur.", 315, 270);
+            g2.drawString("Lakukan grinding EXP atau summon karakter baru!", 285, 305);
         }
 
-        btnBackToLobby.draw(g2);
+        btnEndReturnHub.draw(g2);
     }
 }
