@@ -70,7 +70,7 @@ public class GameCanvas extends JPanel {
         btnGoGacha   = new UIButton(365, 460, 220, 50, "GACHA PORTAL", new Color(142, 68, 173), new Color(155, 89, 182));
         btnGoParty   = new UIButton(630, 460, 220, 50, "PARTY FORMATION", new Color(39, 174, 96), new Color(46, 204, 113));
 
-        // Back / Action Buttons (Bisa dipakai di GACHA, PARTY, maupun BATTLE)
+        // Back / Action Buttons
         btnBackToLobby = new UIButton(780, 25, 140, 35, "< BACK TO HUB", new Color(52, 73, 94), new Color(44, 62, 80));
         btnPull1x      = new UIButton(280, 450, 180, 45, "PULL 1x (160 Gems)", new Color(142, 68, 173), new Color(155, 89, 182));
         btnPull10x     = new UIButton(490, 450, 180, 45, "PULL 10x (1600 Gems)", new Color(211, 84, 0), new Color(230, 126, 34));
@@ -110,7 +110,7 @@ public class GameCanvas extends JPanel {
                 if (input.mouseClicked) {
                     if (btnGoBattle.contains(mouse)) {
                         currentState = GameState.BATTLE;
-                        requestFocusInWindow(); // Pastikan keyboard langsung fokus ke canvas WASD & ESC
+                        requestFocusInWindow();
                     } else if (btnGoGacha.contains(mouse)) {
                         currentState = GameState.GACHA;
                     } else if (btnGoParty.contains(mouse)) {
@@ -147,7 +147,6 @@ public class GameCanvas extends JPanel {
                 break;
 
             case BATTLE:
-                // Cek klik tombol UI Back to Hub di pojok kanan atas
                 btnBackToLobby.checkHover(mouse);
                 if (input.mouseClicked) {
                     if (btnBackToLobby.contains(mouse)) {
@@ -158,7 +157,6 @@ public class GameCanvas extends JPanel {
                     input.mouseClicked = false;
                 }
 
-                // Cek tombol ESC keyboard
                 if (input.escPressed) {
                     currentState = GameState.LOBBY;
                     input.escPressed = false;
@@ -166,6 +164,20 @@ public class GameCanvas extends JPanel {
                 }
 
                 updateBattlePhysics();
+                break;
+
+            case VICTORY:
+            case GAME_OVER:
+                btnBackToLobby.checkHover(mouse);
+                if (input.mouseClicked) {
+                    if (btnBackToLobby.contains(mouse)) {
+                        currentState = GameState.LOBBY;
+                    }
+                    input.mouseClicked = false;
+                }
+                break;
+
+            default:
                 break;
         }
     }
@@ -279,6 +291,12 @@ public class GameCanvas extends JPanel {
             case BATTLE:
                 renderBattleScreen(g2);
                 break;
+            case VICTORY:
+            case GAME_OVER:
+                renderEndScreen(g2, currentState == GameState.VICTORY);
+                break;
+            default:
+                break;
         }
     }
 
@@ -325,7 +343,7 @@ public class GameCanvas extends JPanel {
             g2.drawString(leader.getName() + " [" + leader.getRarity() + " " + leader.getRole() + "]", 340, 195);
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
             g2.drawString(String.format("Level: %d | HP: %d | ATK: %d | DEF: %d", leader.getLevel(), leader.getMaxHp(), leader.getAttack(), leader.getDefense()), 310, 230);
-            
+
             leader.x = 475; leader.y = 320;
             leader.draw(g2);
         }
@@ -411,26 +429,36 @@ public class GameCanvas extends JPanel {
     }
 
     private void renderBattleScreen(Graphics2D g2) {
-        // Musuh
         for (Enemy en : enemies) {
             en.draw(g2);
         }
 
-        // Hero aktif
         Character activeHero = partyManager.getActiveHero();
         if (activeHero != null && activeHero.isAlive()) {
             activeHero.draw(g2);
         }
 
-        // HUD Tempur (HP, Cooldown Q/R, Progres Boss)
         MainHUD.draw(g2, activeHero, partyManager, stageManager, enemies);
-
-        // Tombol Back to Hub di Battle Arena
         btnBackToLobby.draw(g2);
 
-        // Panduan tombol ESC
         g2.setColor(new Color(255, 255, 255, 120));
         g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
         g2.drawString("Tekan [ESC] atau klik tombol di atas untuk kembali ke Hub", 20, 580);
+    }
+
+    private void renderEndScreen(Graphics2D g2, boolean victory) {
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRect(0, 0, 950, 600);
+
+        g2.setFont(new Font("SansSerif", Font.BOLD, 36));
+        if (victory) {
+            g2.setColor(new Color(46, 204, 113));
+            g2.drawString("STAGE CLEARED!", 330, 250);
+        } else {
+            g2.setColor(new Color(231, 76, 60));
+            g2.drawString("PARTY DEFEATED!", 320, 250);
+        }
+
+        btnBackToLobby.draw(g2);
     }
 }
