@@ -1,0 +1,29 @@
+# 1. Java Bytecode & Build Artifacts
+*.class
+bin/
+target/
+build/
+*.jar
+*.war
+*.ear
+
+# 2. VS Code Configuration & Caches
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.history/
+*.vsix
+
+# 3. Eclipse Metadata (Jika dibuka aslab / teman kelompok)
+.metadata/
+.recommenders/
+.loadpath
+.factorypath
+
+# 4. OS & Environment Temporary Files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
