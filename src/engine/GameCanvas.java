@@ -90,7 +90,7 @@ public class GameCanvas extends JPanel {
             case LOBBY:     LobbyScreen.render(g2, profile, party, btn.btnBattle, btn.btnGacha, btn.btnParty); break;
             case GACHA:     GachaScreen.render(g2, profile, gachaHandler.getLastNotice(), btn.btnBack, btn.btn1x, btn.btn10x); break;
             case PARTY:     PartyScreen.render(g2, party, btn.btnBack); break;
-            case BATTLE:    BattleScreen.render(g2, enemies, party, stage, btn.btnBack); break;
+            case BATTLE:    BattleScreen.render(g2, enemies, party, stage, btn.btnBack, combat.damageTexts, combat.vfxList); break;
             case VICTORY:   ResultScreen.render(g2, true, stage, combat.victoryGems, combat.victoryCredits, btn.btnReturn); break;
             case GAME_OVER: ResultScreen.render(g2, false, stage, 0, 0, btn.btnReturn); break;
             default: break;

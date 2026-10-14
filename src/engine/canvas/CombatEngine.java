@@ -7,13 +7,21 @@ import model.Enemy;
 import service.PartyManager;
 import service.PlayerProfile;
 import service.StageManager;
+import view.DamageText;
+import view.VFXEffect;
 
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class CombatEngine {
     public int victoryGems = 0;
     public int victoryCredits = 0;
+
+    // Visual lists
+    public List<DamageText> damageTexts = new ArrayList<>();
+    public List<VFXEffect> vfxList = new ArrayList<>();
 
     public GameState updateCombat(PartyManager party, StageManager stage, PlayerProfile profile, 
                                   InputHandler input, List<Enemy> enemies, Runnable onRespawnCreeps) {
@@ -40,24 +48,44 @@ public class CombatEngine {
         hero.vy = (input.up ? -hero.speed : 0) + (input.down ? hero.speed : 0);
         hero.updatePhysics();
 
-        if (input.skillCast) { hero.castSkill(enemies); input.skillCast = false; }
-        if (input.ultCast)   { hero.castUltimate(enemies); input.ultCast = false; }
+        // Skill Q & R dengan pemicu VFX & Damage Number
+        if (input.skillCast && hero.skillCdCurrent == 0) {
+            vfxList.add(new VFXEffect(hero.x, hero.y, 60, Color.CYAN));
+            hero.castSkill(enemies);
+            input.skillCast = false;
+        }
+        if (input.ultCast && hero.ultCdCurrent == 0) {
+            vfxList.add(new VFXEffect(hero.x, hero.y, 120, Color.YELLOW));
+            hero.castUltimate(enemies);
+            input.ultCast = false;
+        }
 
         if (input.bossChallengeKey && stage.canChallengeBoss(party.getActiveParty()) && !stage.isBossActive()) {
             enemies.clear();
             enemies.add(new Enemy(475, 200, true, stage.getCurrentStage()));
             stage.startBossBattle();
+            vfxList.add(new VFXEffect(475, 200, 150, Color.RED));
             input.bossChallengeKey = false;
         }
 
+        // Loop collision & damage
         Iterator<Enemy> it = enemies.iterator();
         while (it.hasNext()) {
             Enemy en = it.next();
             en.updateAI(hero.x, hero.y);
+
+            // Tabrakan kontak ke hero
             if (Math.hypot(en.x - hero.x, en.y - hero.y) < (en.size / 2.0f + hero.size / 2.0f)) {
+                if (hero.iFrameTimer <= 0) {
+                    int takenDmg = Math.max(5, en.attack - (hero.getDefense() / 3));
+                    damageTexts.add(new DamageText(hero.x, hero.y - 15, "-" + takenDmg, Color.RED));
+                }
                 hero.takeDamage(en.attack);
             }
+
+            // Musuh terkena eliminasi
             if (en.currentHp <= 0) {
+                damageTexts.add(new DamageText(en.x, en.y - 10, "CRIT! " + (hero.getAttack() * 2), Color.ORANGE));
                 hero.gainExp(en.expReward);
                 int g = en.isBoss ? 300 : 20, c = en.isBoss ? 1500 : 120;
                 profile.addGems(g);
@@ -73,6 +101,10 @@ public class CombatEngine {
                 it.remove();
             }
         }
+
+        // Update lifecycle VFX & Damage Text
+        damageTexts.removeIf(dt -> { dt.update(); return dt.isExpired(); });
+        vfxList.removeIf(vfx -> { vfx.update(); return vfx.isExpired(); });
 
         if (enemies.isEmpty() && !stage.isBossActive()) onRespawnCreeps.run();
         return GameState.BATTLE;
