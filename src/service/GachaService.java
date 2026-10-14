@@ -4,51 +4,76 @@ import model.Attacker;
 import model.Character;
 import model.Defender;
 import model.Healer;
+
 import java.util.Random;
 
 public class GachaService {
-    private Random random;
-    private int counter;
-
-    public GachaService() {
-        this.random = new Random();
-        this.counter = 1;
-    }
+    private Random rand = new Random();
+    private int pityCounter = 0;
+    private Character lastPulledCharacter = null;
 
     public Character roll() {
-        int chance = random.nextInt(100) + 1; // 1 - 100
+        pityCounter++;
         String rarity;
-        int hpBase, atkBase, defBase;
 
-        if (chance <= 2) { // 2% SSR
+        // Pity Guarantee Logic
+        if (pityCounter >= 50) {
             rarity = "SSR";
-            hpBase = 4000;
-            atkBase = 1200;
-            defBase = 450;
-        } else if (chance <= 15) { // 13% SR
-            rarity = "SR";
-            hpBase = 2600;
-            atkBase = 750;
-            defBase = 280;
-        } else { // 85% R
-            rarity = "R";
-            hpBase = 1600;
-            atkBase = 450;
-            defBase = 160;
+            pityCounter = 0;
+        } else if (pityCounter % 10 == 0) {
+            int rollSr = rand.nextInt(100);
+            rarity = (rollSr < 15) ? "SSR" : "SR";
+            if (rarity.equals("SSR")) pityCounter = 0;
+        } else {
+            int rollVal = rand.nextInt(100);
+            if (rollVal < 2) {
+                rarity = "SSR";
+                pityCounter = 0;
+            } else if (rollVal < 15) {
+                rarity = "SR";
+            } else {
+                rarity = "R";
+            }
         }
 
-        // Tentukan Role acak (0: Attacker, 1: Defender, 2: Healer)
-        int roleType = random.nextInt(3);
-        String id = String.format("C%03d", counter++);
-
-        switch (roleType) {
-            case 0:
-                return new Attacker(id, "Blade Dancer", rarity, hpBase, atkBase + 200, defBase);
-            case 1:
-                return new Defender(id, "Aegis Sentinel", rarity, hpBase + 1000, atkBase - 100, defBase + 200);
-            case 2:
-            default:
-                return new Healer(id, "Dawn Priestess", rarity, hpBase + 300, atkBase - 50, defBase + 50);
+        // Penyesuaian Base Stat sesuai Rarity
+        int hpBase = 1000, atkBase = 100, defBase = 30;
+        if (rarity.equals("SSR")) {
+            hpBase = 2200; atkBase = 260; defBase = 70;
+        } else if (rarity.equals("SR")) {
+            hpBase = 1500; atkBase = 170; defBase = 45;
         }
+
+        int roleType = rand.nextInt(3);
+        String heroId = "HERO_" + (System.currentTimeMillis() % 10000);
+        Character pulled;
+
+        if (roleType == 0) {
+            pulled = new Attacker(heroId, getHeroName(rarity, "Attacker"), rarity, (int)(hpBase * 0.9), (int)(atkBase * 1.4), defBase);
+        } else if (roleType == 1) {
+            pulled = new Defender(heroId, getHeroName(rarity, "Defender"), rarity, (int)(hpBase * 1.5), (int)(atkBase * 0.8), (int)(defBase * 1.8));
+        } else {
+            pulled = new Healer(heroId, getHeroName(rarity, "Healer"), rarity, (int)(hpBase * 1.1), atkBase, defBase);
+        }
+
+        this.lastPulledCharacter = pulled;
+        return pulled;
+    }
+
+    private String getHeroName(String rarity, String role) {
+        if (rarity.equals("SSR")) {
+            return role.equals("Attacker") ? "Kagura Shadow" : (role.equals("Defender") ? "Aegis Prime" : "Dawn Priestess");
+        } else if (rarity.equals("SR")) {
+            return role.equals("Attacker") ? "Crimson Blade" : (role.equals("Defender") ? "Iron Vanguard" : "Verdant Druid");
+        }
+        return role.equals("Attacker") ? "Scout Fighter" : (role.equals("Defender") ? "Rookie Guard" : "Field Medic");
+    }
+
+    public int getPityCounter() {
+        return pityCounter;
+    }
+
+    public Character getLastPulledCharacter() {
+        return lastPulledCharacter;
     }
 }
