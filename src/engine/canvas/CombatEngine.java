@@ -74,7 +74,20 @@ public class CombatEngine {
             Enemy en = it.next();
             en.updateAI(hero.x, hero.y);
 
-            // Tabrakan kontak ke hero
+            // Eksekusi Burst AoE jika telegraph selesai
+            if (en.isBoss && en.burstReady) {
+                en.burstReady = false;
+                vfxList.add(new VFXEffect(en.x, en.y, en.telegraphRadius, Color.RED));
+                
+                float distHero = (float) Math.hypot(en.x - hero.x, en.y - hero.y);
+                if (distHero <= en.telegraphRadius) {
+                    int burstDmg = en.attack * 2;
+                    hero.takeDamage(burstDmg);
+                    damageTexts.add(new DamageText(hero.x, hero.y - 25, "BURST HIT! -" + burstDmg, Color.MAGENTA));
+                }
+            }
+
+            // Tabrakan kontak biasa ke hero
             if (Math.hypot(en.x - hero.x, en.y - hero.y) < (en.size / 2.0f + hero.size / 2.0f)) {
                 if (hero.iFrameTimer <= 0) {
                     int takenDmg = Math.max(5, en.attack - (hero.getDefense() / 3));
@@ -83,7 +96,7 @@ public class CombatEngine {
                 hero.takeDamage(en.attack);
             }
 
-            // Musuh terkena eliminasi
+            // Musuh mati
             if (en.currentHp <= 0) {
                 damageTexts.add(new DamageText(en.x, en.y - 10, "CRIT! " + (hero.getAttack() * 2), Color.ORANGE));
                 hero.gainExp(en.expReward);
