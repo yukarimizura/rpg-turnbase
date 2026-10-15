@@ -1,8 +1,8 @@
 package service;
 
+import model.Attacker;
 import model.Character;
 import model.Defender;
-import model.Healer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,32 +17,32 @@ public class PartyManager {
     }
 
     public boolean addHeroToParty(Character hero) {
+        if (hero == null) return false;
         if (activeParty.size() >= MAX_PARTY_SIZE) return false;
         if (activeParty.contains(hero)) return false;
+
+        // Slot 1 (Vanguard) wajib tipe Attacker
+        if (activeParty.isEmpty() && !hero.isVanguardEligible()) {
+            return false;
+        }
+
         activeParty.add(hero);
-        syncPartyReferences();
         return true;
     }
 
     public void replacePartyMember(int slotIndex, Character newHero) {
         if (newHero == null) return;
-        // Jika hero sudah ada di party di slot lain, abaikan
         if (activeParty.contains(newHero)) return;
+
+        // Validasi: Slot 0 (Vanguard) hanya boleh diisi oleh Attacker
+        if (slotIndex == 0 && !(newHero instanceof Attacker)) {
+            return;
+        }
 
         if (slotIndex >= 0 && slotIndex < activeParty.size()) {
             activeParty.set(slotIndex, newHero);
         } else if (activeParty.size() < MAX_PARTY_SIZE) {
             activeParty.add(newHero);
-        }
-        syncPartyReferences();
-    }
-
-    // Berikan referensi seluruh party ke Healer agar skill heal memulihkan semua hero
-    public void syncPartyReferences() {
-        for (Character c : activeParty) {
-            if (c instanceof Healer) {
-                ((Healer) c).setPartyReference(activeParty);
-            }
         }
     }
 
@@ -53,7 +53,6 @@ public class PartyManager {
         }
     }
 
-    // Menerapkan buff Defender ke Main DPS saat swap
     public void switchHero(int index) {
         if (index >= 0 && index < activeParty.size()) {
             Character current = getActiveHero();
@@ -63,7 +62,6 @@ public class PartyManager {
                     next.x = current.x;
                     next.y = current.y;
 
-                    // Jika hero sebelumnya adalah Defender dan punya buff shield aktif, oper ke hero berikutnya
                     if (current instanceof Defender && current.bonusDefTimer > 0) {
                         next.applyDefBuff(current.bonusDefAmount, current.bonusDefTimer);
                     }
@@ -101,6 +99,11 @@ public class PartyManager {
         }
     }
 
-    public List<Character> getActiveParty() { return activeParty; }
-    public int getActiveIndex() { return activeIndex; }
+    public List<Character> getActiveParty() {
+        return activeParty;
+    }
+
+    public int getActiveIndex() {
+        return activeIndex;
+    }
 }

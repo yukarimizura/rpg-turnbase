@@ -4,6 +4,7 @@ import model.Attacker;
 import model.Character;
 import model.Defender;
 import model.Healer;
+import model.Support;
 
 import java.util.Random;
 
@@ -12,11 +13,15 @@ public class GachaService {
     private int pityCounter = 0;
     private Character lastPulledCharacter = null;
 
+    private final String[] attackerSubRoles = {"Blade Dancer", "Ranger", "Berserker", "Spellcaster", "Artillery"};
+    private final String[] defenderSubRoles = {"Guardian Shield", "Paladin Aegis"};
+    private final String[] healerSubRoles   = {"Cleric Grace", "Druid Renewal"};
+    private final String[] supportSubRoles  = {"Commander Aura", "Chronomancer"};
+
     public Character roll() {
         pityCounter++;
         String rarity;
 
-        // Pity Guarantee Logic
         if (pityCounter >= 50) {
             rarity = "SSR";
             pityCounter = 0;
@@ -36,7 +41,6 @@ public class GachaService {
             }
         }
 
-        // Penyesuaian Base Stat sesuai Rarity
         int hpBase = 1000, atkBase = 100, defBase = 30;
         if (rarity.equals("SSR")) {
             hpBase = 2200; atkBase = 260; defBase = 70;
@@ -44,36 +48,28 @@ public class GachaService {
             hpBase = 1500; atkBase = 170; defBase = 45;
         }
 
-        int roleType = rand.nextInt(3);
+        int roleType = rand.nextInt(4); // 0: Attacker, 1: Defender, 2: Healer, 3: Support
         String heroId = "HERO_" + (System.currentTimeMillis() % 10000);
         Character pulled;
 
         if (roleType == 0) {
-            pulled = new Attacker(heroId, getHeroName(rarity, "Attacker"), rarity, (int)(hpBase * 0.9), (int)(atkBase * 1.4), defBase);
+            String sub = attackerSubRoles[rand.nextInt(attackerSubRoles.length)];
+            pulled = new Attacker(heroId, rarity + " " + sub, rarity, sub, (int)(hpBase * 0.9), (int)(atkBase * 1.4), defBase);
         } else if (roleType == 1) {
-            pulled = new Defender(heroId, getHeroName(rarity, "Defender"), rarity, (int)(hpBase * 1.5), (int)(atkBase * 0.8), (int)(defBase * 1.8));
+            String sub = defenderSubRoles[rand.nextInt(defenderSubRoles.length)];
+            pulled = new Defender(heroId, rarity + " " + sub, rarity, sub, (int)(hpBase * 1.5), (int)(atkBase * 0.8), (int)(defBase * 1.8));
+        } else if (roleType == 2) {
+            String sub = healerSubRoles[rand.nextInt(healerSubRoles.length)];
+            pulled = new Healer(heroId, rarity + " " + sub, rarity, sub, (int)(hpBase * 1.1), atkBase, defBase);
         } else {
-            pulled = new Healer(heroId, getHeroName(rarity, "Healer"), rarity, (int)(hpBase * 1.1), atkBase, defBase);
+            String sub = supportSubRoles[rand.nextInt(supportSubRoles.length)];
+            pulled = new Support(heroId, rarity + " " + sub, rarity, sub, hpBase, atkBase, defBase);
         }
 
         this.lastPulledCharacter = pulled;
         return pulled;
     }
 
-    private String getHeroName(String rarity, String role) {
-        if (rarity.equals("SSR")) {
-            return role.equals("Attacker") ? "Kagura Shadow" : (role.equals("Defender") ? "Aegis Prime" : "Dawn Priestess");
-        } else if (rarity.equals("SR")) {
-            return role.equals("Attacker") ? "Crimson Blade" : (role.equals("Defender") ? "Iron Vanguard" : "Verdant Druid");
-        }
-        return role.equals("Attacker") ? "Scout Fighter" : (role.equals("Defender") ? "Rookie Guard" : "Field Medic");
-    }
-
-    public int getPityCounter() {
-        return pityCounter;
-    }
-
-    public Character getLastPulledCharacter() {
-        return lastPulledCharacter;
-    }
+    public int getPityCounter() { return pityCounter; }
+    public Character getLastPulledCharacter() { return lastPulledCharacter; }
 }

@@ -6,6 +6,7 @@ public abstract class Character implements SkillAction {
     private String id;
     private String name;
     private String rarity;
+    private String subRole;
     private int level;
     private int currentExp;
     private int expToNextLevel;
@@ -16,11 +17,13 @@ public abstract class Character implements SkillAction {
     private int attack;
     private int defense;
 
-    // Buff Defense Modifier (dari Defender)
+    // Buff Modifiers
     public int bonusDefTimer = 0;
     public int bonusDefAmount = 0;
+    public int bonusAtkTimer = 0;
+    public int bonusAtkAmount = 0;
 
-    // Realtime 2D Engine Physics
+    // Realtime 2D Physics
     public float x, y;
     public float vx, vy;
     public float speed = 4.0f;
@@ -35,10 +38,11 @@ public abstract class Character implements SkillAction {
     public int iFrameTimer = 0;
     public static final int IFRAME_DURATION = 35;
 
-    public Character(String id, String name, String rarity, int maxHp, int attack, int defense) {
+    public Character(String id, String name, String rarity, String subRole, int maxHp, int attack, int defense) {
         this.id = id;
         this.name = name;
         this.rarity = rarity;
+        this.subRole = subRole;
         this.level = 1;
         this.currentExp = 0;
         this.expToNextLevel = 100;
@@ -50,14 +54,18 @@ public abstract class Character implements SkillAction {
         this.y = 200;
     }
 
-    // Cooldown berjalan terus untuk SEMUA hero di party
     public void tickCooldown() {
         if (skillCdCurrent > 0) skillCdCurrent--;
         if (ultCdCurrent > 0) ultCdCurrent--;
         if (iFrameTimer > 0) iFrameTimer--;
+
         if (bonusDefTimer > 0) {
             bonusDefTimer--;
             if (bonusDefTimer == 0) bonusDefAmount = 0;
+        }
+        if (bonusAtkTimer > 0) {
+            bonusAtkTimer--;
+            if (bonusAtkTimer == 0) bonusAtkAmount = 0;
         }
     }
 
@@ -71,6 +79,11 @@ public abstract class Character implements SkillAction {
     public void applyDefBuff(int bonus, int durationTicks) {
         this.bonusDefAmount = bonus;
         this.bonusDefTimer = durationTicks;
+    }
+
+    public void applyAtkBuff(int bonus, int durationTicks) {
+        this.bonusAtkAmount = bonus;
+        this.bonusAtkTimer = durationTicks;
     }
 
     public void gainExp(int amount) {
@@ -115,18 +128,22 @@ public abstract class Character implements SkillAction {
         this.iFrameTimer = 0;
         this.bonusDefAmount = 0;
         this.bonusDefTimer = 0;
+        this.bonusAtkAmount = 0;
+        this.bonusAtkTimer = 0;
     }
 
     public abstract void draw(Graphics2D g2);
     public abstract String getRole();
+    public abstract boolean isVanguardEligible();
 
     public String getId() { return id; }
     public String getName() { return name; }
     public String getRarity() { return rarity; }
+    public String getSubRole() { return subRole; }
     public int getLevel() { return level; }
     public int getCurrentHp() { return currentHp; }
     public int getMaxHp() { return maxHp; }
-    public int getAttack() { return attack; }
+    public int getAttack() { return attack + bonusAtkAmount; }
     public int getDefense() { return defense + bonusDefAmount; }
     public boolean isAlive() { return currentHp > 0; }
 }

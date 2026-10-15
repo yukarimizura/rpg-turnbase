@@ -5,52 +5,25 @@ import java.awt.Graphics2D;
 import java.util.List;
 
 public class Healer extends Character {
-    private List<Character> partyRef;
-
-    public Healer(String id, String name, String rarity, int maxHp, int attack, int defense) {
-        super(id, name, rarity, maxHp, attack, defense);
-    }
-
-    public void setPartyReference(List<Character> party) {
-        this.partyRef = party;
+    public Healer(String id, String name, String rarity, String subRole, int maxHp, int attack, int defense) {
+        super(id, name, rarity, subRole, maxHp, attack, defense);
     }
 
     @Override
-    public void castSkill(List<Enemy> enemies) {
-        this.skillCdCurrent = this.skillCdMax;
-        int healAmt = (int) (getMaxHp() * 0.35f);
-        this.heal(healAmt);
-
-        // Heal anggota party cadangan (terutama Attacker)
-        if (partyRef != null) {
-            for (Character c : partyRef) {
-                if (c.isAlive()) c.heal(healAmt);
-            }
-        }
-    }
+    public void castSkill(List<Enemy> enemies) {}
 
     @Override
-    public void castUltimate(List<Enemy> enemies) {
-        this.ultCdCurrent = this.ultCdMax;
-        // Divine Prayer: Pulihkan 75% HP seluruh party
-        int fullHeal = (int) (getMaxHp() * 0.75f);
-        this.heal(fullHeal);
-
-        if (partyRef != null) {
-            for (Character c : partyRef) {
-                if (c.isAlive()) c.heal(fullHeal);
-            }
-        }
-    }
+    public void castUltimate(List<Enemy> enemies) {}
 
     @Override
     public void draw(Graphics2D g2) {
         g2.setColor(new Color(46, 204, 113));
         g2.fillOval((int) (x - size / 2), (int) (y - size / 2), size, size);
-        g2.setColor(Color.WHITE);
-        g2.drawOval((int) (x - size / 2), (int) (y - size / 2), size, size);
     }
 
     @Override
     public String getRole() { return "Healer"; }
+
+    @Override
+    public boolean isVanguardEligible() { return false; }
 }
