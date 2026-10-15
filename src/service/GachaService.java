@@ -72,4 +72,5 @@ public class GachaService {
 
     public int getPityCounter() { return pityCounter; }
     public Character getLastPulledCharacter() { return lastPulledCharacter; }
+    public void setPityCounter(int pity) { this.pityCounter = pity; }
 }

@@ -31,4 +31,5 @@ public class StageManager {
     public int getCreepsDefeated() { return creepsDefeated; }
     public int getCreepsRequired() { return CREEPS_REQUIRED; }
     public boolean isBossActive() { return bossActive; }
+    public void setCurrentStage(int stage) { this.currentStage = stage; }
 }

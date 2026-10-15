@@ -1,6 +1,7 @@
 package engine;
 
 public enum GameState {
+    PROFILE_SELECT,
     TITLE,
     LOBBY,
     GACHA,

@@ -38,7 +38,11 @@ public class PlayerProfile {
     }
 
     public String getPlayerName() { return playerName; }
+    public void setPlayerName(String name) { this.playerName = name; }
+    public void setGems(int gems) { this.cyberGems = gems; }
+    public void setCredits(int credits) { this.credits = credits; }
     public int getCyberGems() { return cyberGems; }
     public int getCredits() { return credits; }
     public List<Character> getOwnedHeroes() { return ownedHeroes; }
+    
 }
