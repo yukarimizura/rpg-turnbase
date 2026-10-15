@@ -7,12 +7,17 @@ import service.*;
 import view.screen.*;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameCanvas extends JPanel {
+    public static final int BASE_WIDTH = 950;
+    public static final int BASE_HEIGHT = 600;
+
     private GameState currentState = GameState.TITLE;
     private PartyManager party;
     private StageManager stage;
@@ -32,7 +37,7 @@ public class GameCanvas extends JPanel {
         this.gacha = gacha;
         this.input = input;
 
-        setPreferredSize(new Dimension(950, 600));
+        setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
         setBackground(new Color(15, 17, 23));
         setFocusable(true);
         addKeyListener(input);
@@ -52,8 +57,16 @@ public class GameCanvas extends JPanel {
         }
     }
 
+    // Mengonversi posisi mouse fisik jendela menjadi koordinat virtual 950x600
+    private Point getVirtualMousePoint() {
+        if (input.mousePosition == null) return new Point(0, 0);
+        double scaleX = (double) getWidth() / BASE_WIDTH;
+        double scaleY = (double) getHeight() / BASE_HEIGHT;
+        return new Point((int) (input.mousePosition.x / scaleX), (int) (input.mousePosition.y / scaleY));
+    }
+
     public void updateState() {
-        Point m = input.mousePosition;
+        Point m = getVirtualMousePoint();
         btn.updateHover(m);
 
         if (input.mouseClicked) {
@@ -79,11 +92,10 @@ public class GameCanvas extends JPanel {
             if (btn.btnBattle.contains(m)) {
                 currentState = GameState.BATTLE;
                 requestFocusInWindow();
-            } else if (btn.btnGacha.contains(m)) {
-                currentState = GameState.GACHA;
-            } else if (btn.btnParty.contains(m)) {
-                currentState = GameState.PARTY;
-            } else if (btn.btnTrainHero.contains(m)) {
+            } else if (btn.btnGacha.contains(m)) currentState = GameState.GACHA;
+            else if (btn.btnParty.contains(m)) currentState = GameState.PARTY;
+            else if (btn.btnSettings.contains(m)) currentState = GameState.SETTINGS;
+            else if (btn.btnTrainHero.contains(m)) {
                 Character leader = party.getActiveHero();
                 if (leader != null) {
                     int cost = leader.getUpgradeCost();
@@ -98,15 +110,19 @@ public class GameCanvas extends JPanel {
             else if (btn.btn1x.contains(m)) gachaHandler.handlePull(1, 160, profile, gacha, party);
             else if (btn.btn10x.contains(m)) gachaHandler.handlePull(10, 1600, profile, gacha, party);
         } else if (currentState == GameState.PARTY) {
-            if (btn.btnBack.contains(m)) {
-                currentState = GameState.LOBBY;
-            } else {
-                PartyScreen.handleClick(m, party, profile);
+            if (btn.btnBack.contains(m)) currentState = GameState.LOBBY;
+            else PartyScreen.handleClick(m, party, profile);
+        } else if (currentState == GameState.SETTINGS) {
+            if (btn.btnBack.contains(m)) currentState = GameState.LOBBY;
+            else if (btn.btnResStandard.contains(m)) {
+                Container top = SwingUtilities.getWindowAncestor(this);
+                if (top != null) top.setSize(950, 630);
+            } else if (btn.btnResHD.contains(m)) {
+                Container top = SwingUtilities.getWindowAncestor(this);
+                if (top != null) top.setSize(1280, 750);
             }
         } else if (currentState == GameState.BATTLE) {
-            if (btn.btnBack.contains(m)) {
-                currentState = GameState.LOBBY;
-            }
+            if (btn.btnBack.contains(m)) currentState = GameState.LOBBY;
         } else if (currentState == GameState.VICTORY || currentState == GameState.GAME_OVER) {
             if (btn.btnReturn.contains(m)) {
                 party.reviveAllParty();
@@ -122,18 +138,27 @@ public class GameCanvas extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // Dynamic Resolution Scaling
+        AffineTransform old = g2.getTransform();
+        double scaleX = (double) getWidth() / BASE_WIDTH;
+        double scaleY = (double) getHeight() / BASE_HEIGHT;
+        g2.scale(scaleX, scaleY);
+
         switch (currentState) {
             case TITLE:
                 TitleScreen.render(g2, btn.btnStart, btn.btnQuit);
                 break;
             case LOBBY:
-                LobbyScreen.render(g2, profile, party, btn.btnBattle, btn.btnGacha, btn.btnParty, btn.btnTrainHero);
+                LobbyScreen.render(g2, profile, party, btn.btnBattle, btn.btnGacha, btn.btnParty, btn.btnTrainHero, btn.btnSettings);
                 break;
             case GACHA:
                 GachaScreen.render(g2, profile, gacha, gachaHandler.getLastNotice(), btn.btnBack, btn.btn1x, btn.btn10x);
                 break;
             case PARTY:
                 PartyScreen.render(g2, party, profile, btn.btnBack);
+                break;
+            case SETTINGS:
+                SettingsScreen.render(g2, btn.btnBack, btn.btnResStandard, btn.btnResHD, btn.btnToggleVfx);
                 break;
             case BATTLE:
                 BattleScreen.render(g2, enemies, party, stage, btn.btnBack, combat.damageTexts, combat.vfxList);
@@ -147,5 +172,7 @@ public class GameCanvas extends JPanel {
             default:
                 break;
         }
+
+        g2.setTransform(old);
     }
 }

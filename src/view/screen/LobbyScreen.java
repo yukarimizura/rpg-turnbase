@@ -10,7 +10,7 @@ import java.awt.Graphics2D;
 
 public class LobbyScreen {
     public static void render(Graphics2D g2, PlayerProfile profile, PartyManager party, 
-                             UIButton btnBattle, UIButton btnGacha, UIButton btnParty, UIButton btnTrain) {
+                             UIButton btnBattle, UIButton btnGacha, UIButton btnParty, UIButton btnTrain, UIButton btnSettings) {
         // Top Economy Bar
         g2.setColor(new Color(25, 28, 38));
         g2.fillRect(0, 0, 950, 70);
@@ -30,11 +30,11 @@ public class LobbyScreen {
         if (leader != null) {
             g2.setColor(Color.LIGHT_GRAY);
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
-            g2.drawString("Active Vanguard:", 380, 150);
+            g2.drawString("Active Vanguard (" + leader.getSubRole() + "):", 360, 150);
             
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("SansSerif", Font.BOLD, 22));
-            g2.drawString(leader.getName() + " [" + leader.getRarity() + " " + leader.getRole() + "]", 340, 185);
+            g2.drawString(leader.getName() + " [" + leader.getRarity() + "]", 340, 185);
             
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
             g2.drawString(String.format("Level: %d | HP: %d/%d | ATK: %d | DEF: %d", 
@@ -54,5 +54,6 @@ public class LobbyScreen {
         btnBattle.draw(g2);
         btnGacha.draw(g2);
         btnParty.draw(g2);
+        btnSettings.draw(g2);
     }
 }
