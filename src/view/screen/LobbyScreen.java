@@ -10,7 +10,7 @@ import java.awt.Graphics2D;
 
 public class LobbyScreen {
     public static void render(Graphics2D g2, PlayerProfile profile, PartyManager party, 
-                             UIButton btnBattle, UIButton btnGacha, UIButton btnParty) {
+                             UIButton btnBattle, UIButton btnGacha, UIButton btnParty, UIButton btnTrain) {
         // Top Economy Bar
         g2.setColor(new Color(25, 28, 38));
         g2.fillRect(0, 0, 950, 70);
@@ -30,16 +30,25 @@ public class LobbyScreen {
         if (leader != null) {
             g2.setColor(Color.LIGHT_GRAY);
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
-            g2.drawString("Active Vanguard:", 380, 160);
+            g2.drawString("Active Vanguard:", 380, 150);
+            
             g2.setColor(Color.WHITE);
             g2.setFont(new Font("SansSerif", Font.BOLD, 22));
-            g2.drawString(leader.getName() + " [" + leader.getRarity() + " " + leader.getRole() + "]", 340, 195);
+            g2.drawString(leader.getName() + " [" + leader.getRarity() + " " + leader.getRole() + "]", 340, 185);
+            
             g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
             g2.drawString(String.format("Level: %d | HP: %d/%d | ATK: %d | DEF: %d", 
-                    leader.getLevel(), leader.getCurrentHp(), leader.getMaxHp(), leader.getAttack(), leader.getDefense()), 300, 230);
+                    leader.getLevel(), leader.getCurrentHp(), leader.getMaxHp(), leader.getAttack(), leader.getDefense()), 300, 215);
 
-            leader.x = 475; leader.y = 320;
+            g2.setColor(new Color(255, 204, 0));
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            g2.drawString("Upgrade Cost: " + leader.getUpgradeCost() + " Credits", 390, 245);
+
+            leader.x = 475; 
+            leader.y = 310;
             leader.draw(g2);
+
+            btnTrain.draw(g2);
         }
 
         btnBattle.draw(g2);

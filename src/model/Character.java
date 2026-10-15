@@ -94,6 +94,18 @@ public abstract class Character implements SkillAction {
         this.iFrameTimer = 0;
     }
 
+    public void levelUpManual() {
+        level++;
+        maxHp += 250;
+        currentHp = maxHp;
+        attack += 40;
+        defense += 15;
+    }
+
+    public int getUpgradeCost() {
+        return level * 300; // Biaya credits makin tinggi tiap level
+    }
+
     public abstract void draw(Graphics2D g2);
     public abstract String getRole();
 
