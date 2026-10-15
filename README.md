@@ -51,4 +51,99 @@ Menjamin akurasi klik tombol dan rendering antarmuka saat jendela diubah ukurann
    * **Support Resonance (Slot 2–5):** Diisi oleh **Defender**, **Healer**, dan **Support**. Mereka tidak turun ke lapangan, melainkan memicu kemampuan otomatis berkala (*auto-trigger passive*):
      * **Guardian:** Perisai serap damage (*Flat Shield Reduction*).
      * **Paladin:** Aura duri pelindung (*Thorns Reflect Shield*).
-     * **Cleric:** Denyut pemulihan HP masif inst
+     * **Cleric:** Denyut pemulihan HP masif instan saat darah kritis.
+     * **Druid:** Regenerasi HP berkala secara berkelanjutan (HoT).
+     * **Commander:** Denyut teriakan perang (+ATK boost tim).
+     * **Chronomancer:** Mempercepat pengurangan waktu cooldown skill Vanguard.
+
+2. **5 Subperan Attacker:**
+   * **Blade Dancer:** Kecepatan lari tinggi & cooldown skill singkat (spam tebasan).
+   * **Ranger:** Single-target burst damage jarak jauh.
+   * **Berserker:** Pengganda damage meningkat seiring sekaratnya sisa darah.
+   * **Spellcaster:** Ledakan lingkaran sihir area luas (AoE burst).
+   * **Artillery:** Serangan meriam berdaya dorong (*knockback*).
+
+---
+
+## 🕹️ Skema Kontrol & Input (Keybindings)
+
+| Tombol / Kontrol | Cakupan Mode | Aksi / Fungsi |
+| :--- | :--- | :--- |
+| **W** | Pertempuran | Bergerak ke atas (*Move Up*) |
+| **A** | Pertempuran | Bergerak ke kiri (*Move Left*) |
+| **S** | Pertempuran | Bergerak ke bawah (*Move Down*) |
+| **D** | Pertempuran | Bergerak ke kanan (*Move Right*) |
+| **Q** | Pertempuran | Melancarkan Subrole Skill Vanguard |
+| **R** | Pertempuran | Melancarkan Ultimate Burst Vanguard |
+| **B** | Pertempuran | Menantang Boss Stage (jika creep sudah bersih) |
+| **ESC** | Pertempuran | Menghentikan pertarungan & kembali ke Lobby Hub |
+| **1 - 5 (Numpad/Digit)** | Tim / Pertempuran | Menukar slot pahlawan secara instan |
+| **Left Click (Mouse)** | Seluruh Antarmuka | Navigasi menu, eksekusi tombol, & pemilihan slot tim |
+| **Window Drag / Border** | Seluruh Antarmuka | Menyesuaikan ukuran layar secara fleksibel (*Auto Scale*) |
+
+---
+
+## 🏗️ Struktur Arsitektur Direktori
+
+```text
+src/
+├── App.java                                # Entry point aplikasi & inisialisasi window
+│
+├── engine/                                 # Kernel loop & sistem kontrol
+│   ├── GameCanvas.java                     # Swing canvas & transformer penskalaan
+│   ├── GameLoop.java                       # Fixed 60 FPS update-render thread loop
+│   ├── GameState.java                      # Enumerasi State Machine
+│   ├── InputHandler.java                   # Keyboard & Mouse event listener adapter
+│   │
+│   ├── canvas/                             # Logika orkestrasi pertempuran
+│   │   ├── CombatEngine.java               # Engine deteksi kontak & siklus bertarung
+│   │   └── SupportResonanceEngine.java     # Engine timer auto-trigger off-field support
+│   │
+│   └── handlers/                           # Pendelegasian event UI
+│       ├── CanvasButtonManager.java        # Manajemen tombol & koordinat interaktif
+│       ├── CanvasClickHandler.java         # Handler percabangan klik antarmuka
+│       ├── CanvasRenderer.java             # Dispatcher perenderan tampilan layar
+│       └── GachaHandler.java               # Pengendali transaksi & rolling hero
+│
+├── model/                                  # Entitas objek & pemodelan peran
+│   ├── npc/
+│   │   └── Enemy.java                      # Model kecerdasan creep & boss telegraph
+│   │
+│   └── characters/                         # Entitas karakter pahlawan
+│       ├── Character.java                  # Abstract base class entitas hero
+│       ├── Attacker.java                   # Karakter Vanguard aktif
+│       ├── Defender.java                   # Karakter pertahanan resonansi
+│       ├── Healer.java                     # Karakter pemulihan resonansi
+│       ├── Support.java                    # Karakter buffer resonansi
+│       │
+│       └── skills/                         # Logika eksekusi subperan terisolasi
+│           ├── SkillAction.java            # Interface kemampuan skill
+│           ├── AttackerSkillExecutor.java  # Eksekutor 5 subperan Attacker
+│           ├── DefenderSkillExecutor.java  # Eksekutor Guardian & Paladin
+│           ├── HealerSkillExecutor.java    # Eksekutor Cleric & Druid
+│           └── SupportSkillExecutor.java   # Eksekutor Commander & Chronomancer
+│
+├── service/                                # Layanan bisnis, state, & persistensi
+│   ├── GachaService.java                   # Logika probabilitas acak & pity counter
+│   ├── PartyManager.java                   # Validasi komposisi tim & cooldown hero
+│   ├── PlayerProfile.java                  # Model akun, saldo koin/gems, & roster
+│   ├── SaveManager.java                    # Pembacaan & penulisan stream berkas .save
+│   └── StageManager.java                   # Pengatur progres stage & pembuka boss
+│
+└── view/                                   # Lapisan presentasi & visual UI
+    ├── component/                          # Komponen grafis reusable
+    │   ├── DamageText.java                 # Animasi angka damage/heal melayang
+    │   ├── MainHUD.java                    # Status bar HP/EXP/Cooldown di arena
+    │   ├── UIButton.java                   # Komponen tombol interaktif dengan hover
+    │   └── VFXEffect.java                  # Animasi visual partikel melingkar
+    │
+    └── screen/                             # Layar UI permainan
+        ├── TitleScreen.java                # Layar judul
+        ├── ProfileSelectScreen.java        # Layar seleksi profil & input komandan baru
+        ├── LobbyScreen.java                # Hub komandan & arena training
+        ├── GachaScreen.java                # Antarmuka pemanggilan pahlawan
+        ├── PartyScreen.java                # Antarmuka formasi slot 1-5
+        ├── PartyInventoryRenderer.java     # Grid visual koleksi inventaris hero
+        ├── BattleScreen.java               # Arena pertarungan real-time
+        ├── SettingsScreen.java             # Menu resolusi & tombol simpan manual
+        └── ResultScreen.java               # Ringkasan hasil pertarungan
