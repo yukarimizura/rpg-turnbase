@@ -1,7 +1,7 @@
 package model.characters;
 
-import model.Enemy;
 import model.characters.attacker.AttackerSkillExecutor;
+import model.npc.Enemy;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

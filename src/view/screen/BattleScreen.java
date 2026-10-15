@@ -2,18 +2,18 @@ package view.screen;
 
 import service.PartyManager;
 import service.StageManager;
-import view.DamageText;
-import view.MainHUD;
-import view.UIButton;
-import view.VFXEffect;
+import view.component.DamageText;
+import view.component.MainHUD;
+import view.component.UIButton;
+import view.component.VFXEffect;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.util.List;
 
-import model.Enemy;
 import model.characters.Character;
+import model.npc.Enemy;
 
 public class BattleScreen {
     public static void render(Graphics2D g2, List<Enemy> enemies, PartyManager party, 
