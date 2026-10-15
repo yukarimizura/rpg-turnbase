@@ -1,69 +1,81 @@
+---
+
+### File 2: `README.id.md` (Versi Bahasa Indonesia)
+
+```markdown
+<p align="center">
+  <a href="README.md">English</a> | <b>Bahasa Indonesia</b>
+</p>
+
+---
+
 # ⚔️ Cyber-Chrono ARPG Turn-Based Engine
 
-Engine Action RPG 2D berbasis Java murni (Swing & Graphics2D) yang mengintegrasikan mekanik pertempuran real-time hibrida: **Vanguard Active Fighter** dan **Off-Field Support Resonance**. Proyek ini dirancang mengikuti prinsip modularitas Object-Oriented Programming (OOP) yang ketat (semua kelas dan modul terfragmentasi di bawah 100 baris kode).
+Engine Action RPG 2D berbasis Java murni (Swing & Graphics2D) yang mengintegrasikan sistem pertempuran real-time hibrida: **Vanguard Arena Fighter** dan **Off-Field Support Resonance**. Proyek ini dirancang mengikuti prinsip modularitas Object-Oriented Programming (OOP) yang ketat (seluruh file berukuran di bawah 100 baris kode).
 
 ---
 
 ## 🧠 Analisis & Implementasi Algoritma
 
-Untuk memenuhi standar evaluasi teknis, proyek ini mengimplementasikan beberapa algoritma komputasi mandiri tanpa library eksternal:
+Untuk memenuhi standar evaluasi teknis, proyek ini mengimplementasikan algoritma komputasi mandiri tanpa library eksternal:
 
-### 1. Collision Detection & Proximity Targetting (Euclidean Geometry)
+### 1. Collision Detection & Proximity Targeting (Euclidean Geometry)
 * **Pendeteksian Tabrakan Lingkaran (Bounding Circle Collision):**
-  Menggunakan perhitungan jarak Euclidean berbasis teorema Pythagoras untuk mendeteksi kontak antara entitas (Vanguard, Creep, dan Boss Hitbox):
-  $$\text{Distance} = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$
-  Kondisi tabrakan terpenuhi jika $\text{Distance} < (r_1 + r_2)$.
-* **Pencarian Target Terdekat (Nearest-Neighbor Heuristic):**
-  Digunakan pada subperan *Ranger* untuk memilih target tunggal musuh secara instan dengan kompleksitas waktu $O(N)$ sebelum melepaskan tembakan presisi.
+  Deteksi kontak antara entitas sirkular (Vanguard, Creep, dan Boss) dihitung menggunakan jarak Euclidean berbasis teorema Pythagoras:
+  * **Rumus Jarak:** `Distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)`
+  * Tabrakan terjadi apabila `Distance < (radius1 + radius2)`.
+* **Nearest-Neighbor Heuristic Targeting:**
+  Digunakan oleh subperan *Ranger* untuk mendeteksi dan mengunci target musuh terdekat dengan kompleksitas waktu $O(N)$ sebelum melepaskan tembakan presisi.
 
-### 2. State Machine Pattern (Manajemen Siklus Permainan)
-Mengimplementasikan *Finite State Machine (FSM)* terpusat via `GameState` (`PROFILE_SELECT`, `TITLE`, `LOBBY`, `GACHA`, `PARTY`, `BATTLE`, `SETTINGS`, `VICTORY`, `GAME_OVER`). FSM menjamin transisi status game bersifat deterministik, mencegah tumpang tindih eksekusi antara logika pertempuran dan navigasi menu antarmuka.
+### 2. Finite State Machine (Manajemen Siklus Permainan)
+Transisi siklus permainan dikelola melalui FSM terpusat via `GameState` (`PROFILE_SELECT`, `TITLE`, `LOBBY`, `GACHA`, `PARTY`, `BATTLE`, `SETTINGS`, `VICTORY`, `GAME_OVER`). FSM menjamin transisi state bersifat deterministik dan mencegah tumpang tindih eksekusi antara pertempuran dan menu antarmuka.
 
 ### 3. Gacha Drop Rate & Dynamic Pity Counter Algorithm
-Sistem roll gacha menggunakan pembangkit bilangan pseudo-acak (*Uniform Distribution PRNG*) dengan aturan probabilitas bersyarat:
-* **Base Rates:** SSR = 2%, SR = 13%, R = 85%.
-* **Soft/Hard Pity Mechanism:**
-  * Setiap kelipatan 10 tarikan tanpa SSR dijamin memberikan minimal rank SR.
-  * Pada tarikan ke-50 (`pityCounter >= 50`), sistem mengunci probabilitas 100% untuk drop hero SSR dan melakukan *reset* penghitung ke 0.
+Sistem roll gacha menggunakan pembangkit bilangan acak seragam (*Uniform Distribution Sampling*) dengan mekanisme proteksi bersyarat:
+* **Base Pull Rates:** SSR = 2%, SR = 13%, R = 85%.
+* **Pity Mechanism:**
+  * **Soft Pity:** Setiap kelipatan 10 tarikan tanpa SSR dijamin memberikan minimal rank SR.
+  * **Hard Pity:** Jika mencapai 50 tarikan (`pityCounter >= 50`), sistem mengunci probabilitas 100% untuk drop hero SSR dan melakukan reset penghitung ke 0.
 
 ### 4. Boss AI State Loop: Telegraphing & Burst Cycle
 AI Boss mengadopsi mesin waktu bersiklus (*Time-driven State Cycle*):
-1. **Chasing Phase:** Bos mengejar posisi Vanguard dengan vektor translasi ternormalisasi.
-2. **Telegraph Charge Phase:** Pada interval waktu tertentu, kecepatan bos menjadi 0 dan lingkaran radius bahaya (*telegraph zone*) dirender di lantai arena selama durasi *charge*.
-3. **AoE Burst Execution:** Begitu waktu *charge* habis, kalkulasi area efek (AoE) dieksekusi secara instan. Pemain yang gagal menjauh dari radius akan menerima damage berlipat.
+1. **Chasing Phase:** Bos bergerak mengejar posisi Vanguard dengan vektor translasi ternormalisasi.
+2. **Telegraph Charge Phase:** Kecepatan bos menjadi 0, dan lingkaran radius peringatan (*telegraph zone*) dirender di lantai arena selama durasi tertentu.
+3. **AoE Burst Execution:** Saat waktu charge habis, kalkulasi area efek (AoE) dieksekusi secara instan. Entitas yang berada di dalam area menerima damage berlipat.
 
-### 5. Flat-File Serialization Parsing (.save)
-Algoritma persistensi data mandiri menggunakan pembacaan sekuensial berbasis *delimiter* (`;`):
-* Menghindari overhead pustaka eksternal JSON dengan pemindaian baris stream `BufferedReader`.
-* Struktur data memisahkan *header record* (informasi profil) dan *dynamic payload records* (`HERO;<id>;<role>;...`) yang direkonstruksi ulang menjadi instansiasi objek konkret via polimorfisme saat proses pemuatan (*deserialization*).
+### 5. Flat-File Serialization Parsing (`.save`)
+Mekanisme penyimpanan data lokal mandiri tanpa ketergantungan JSON eksternal menggunakan pemindaian stream berbasis pemisah (*delimiter* `;`):
+* Membaca baris secara berurutan menggunakan `BufferedReader`.
+* Memisahkan baris *header* (profil akun, mata uang, progres stage, penghitung pity) dari baris entitas dinamis (`HERO;<id>;<role>;...`).
+* Mengonstruksi ulang objek hero secara dinamis via polimorfisme saat proses pemuatan file.
 
 ### 6. Dynamic Scaling Matrix (Virtual Screen Mapping)
-Kanvas beroperasi dengan resolusi virtual native `950 x 600`. Algoritma penyekalaan memetakan koordinat fisik monitor/jendela ke ruang koordinat virtual secara real-time:
+Kanvas beroperasi pada resolusi virtual native `950 x 600`. Algoritma penyekalaan memetakan koordinat fisik monitor/jendela ke ruang koordinat virtual secara real-time:
 * **X_virtual** = `X_mouse / Scale_X`
 * **Y_virtual** = `Y_mouse / Scale_Y`
 
-Perhitungan ini menjamin akurasi klik tombol dan rendering antarmuka tetap presisi saat jendela diubah ukurannya (*dynamic resize / maximize*).
+Perhitungan ini menjamin koordinat tombol dan rendering grafik tetap presisi saat jendela di-drag, di-maximize, atau diatur melalui menu resolusi.
 
 ---
 
 ## 🎮 Fitur Mekanik Permainan
 
-1. **Vanguard (Active) & Resonance (Off-field):**
-   * **Vanguard (Slot 1):** Hanya dapat diisi oleh tipe **Attacker**. Karakter utama yang bertarung di arena.
-   * **Support Resonance (Slot 2–5):** Diisi oleh **Defender**, **Healer**, dan **Support**. Mereka tidak turun ke lapangan, melainkan memicu kemampuan otomatis berkala (*auto-trigger passive*):
-     * **Guardian:** Perisai serap damage (*Flat Shield Reduction*).
-     * **Paladin:** Aura duri pelindung (*Thorns Reflect Shield*).
-     * **Cleric:** Denyut pemulihan HP masif instan saat darah kritis.
-     * **Druid:** Regenerasi HP berkala secara berkelanjutan (HoT).
-     * **Commander:** Denyut teriakan perang (+ATK boost tim).
-     * **Chronomancer:** Mempercepat pengurangan waktu cooldown skill Vanguard.
+1. **Sistem Vanguard & Resonance:**
+   * **Vanguard (Slot 1):** Khusus untuk tipe **Attacker**. Merupakan karakter utama yang dikontrol langsung di arena.
+   * **Resonance Squad (Slot 2–5):** Diisi oleh **Defender**, **Healer**, dan **Support**. Mereka berada di luar arena (*off-field*) dan memicu pasif secara berkala:
+     * **Guardian:** Memberikan perisai flat penahan damage.
+     * **Paladin:** Memberikan perisai duri (*thorns*) yang memantulkan damage saat musuh menabrak.
+     * **Cleric:** Memberikan pemulihan HP burst instan saat darah Vanguard berada di bawah 80%.
+     * **Druid:** Memberikan regenerasi HP bertahap (HoT) secara berkelanjutan.
+     * **Commander:** Memberikan teriakan perang (+ATK boost tim).
+     * **Chronomancer:** Memotong waktu cooldown skill aktif Vanguard.
 
 2. **5 Subperan Attacker:**
-   * **Blade Dancer:** Kecepatan lari tinggi & cooldown skill singkat (spam tebasan).
-   * **Ranger:** Single-target burst damage jarak jauh.
-   * **Berserker:** Pengganda damage meningkat seiring sekaratnya sisa darah.
-   * **Spellcaster:** Ledakan lingkaran sihir area luas (AoE burst).
-   * **Artillery:** Serangan meriam berdaya dorong (*knockback*).
+   * **Blade Dancer:** Kecepatan gerak tinggi dengan cooldown skill singkat (spam tebasan).
+   * **Ranger:** Tembakan terarah dengan damage tinggi ke musuh terdekat.
+   * **Berserker:** Pengganda damage meningkat seiring semakin rendahnya sisa HP.
+   * **Spellcaster:** Serangan sihir area luas (AoE burst).
+   * **Artillery:** Serangan meriam berdaya dorong (*knockback*) menjauhkan musuh.
 
 ---
 
@@ -71,17 +83,17 @@ Perhitungan ini menjamin akurasi klik tombol dan rendering antarmuka tetap presi
 
 | Tombol / Kontrol | Cakupan Mode | Aksi / Fungsi |
 | :--- | :--- | :--- |
-| **W** | Pertempuran | Bergerak ke atas (*Move Up*) |
-| **A** | Pertempuran | Bergerak ke kiri (*Move Left*) |
-| **S** | Pertempuran | Bergerak ke bawah (*Move Down*) |
-| **D** | Pertempuran | Bergerak ke kanan (*Move Right*) |
+| **W** | Pertempuran | Bergerak ke Atas |
+| **A** | Pertempuran | Bergerak ke Kiri |
+| **S** | Pertempuran | Bergerak ke Bawah |
+| **D** | Pertempuran | Bergerak ke Kanan |
 | **Q** | Pertempuran | Melancarkan Subrole Skill Vanguard |
 | **R** | Pertempuran | Melancarkan Ultimate Burst Vanguard |
-| **B** | Pertempuran | Menantang Boss Stage (jika creep sudah bersih) |
-| **ESC** | Pertempuran | Menghentikan pertarungan & kembali ke Lobby Hub |
-| **1 - 5 (Numpad/Digit)** | Tim / Pertempuran | Menukar slot pahlawan secara instan |
+| **B** | Pertempuran | Menantang Boss Stage (saat creep sudah bersih) |
+| **ESC** | Pertempuran | Kembali ke Lobby Hub |
+| **1 - 5 (Angka)** | Tim / Pertempuran | Menukar slot pahlawan secara instan |
 | **Left Click (Mouse)** | Seluruh Antarmuka | Navigasi menu, eksekusi tombol, & pemilihan slot tim |
-| **Window Drag / Border** | Seluruh Antarmuka | Menyesuaikan ukuran layar secara fleksibel (*Auto Scale*) |
+| **Window Resize** | Seluruh Antarmuka | Penskalaan otomatis layar secara dinamis |
 
 ---
 
