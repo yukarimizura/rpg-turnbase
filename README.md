@@ -39,8 +39,10 @@ Algoritma persistensi data mandiri menggunakan pembacaan sekuensial berbasis *de
 
 ### 6. Dynamic Scaling Matrix (Virtual Screen Mapping)
 Kanvas beroperasi dengan resolusi virtual native `950 x 600`. Algoritma penyekalaan memetakan koordinat fisik monitor/jendela ke ruang koordinat virtual secara real-time:
-$$X_{\text{virtual}} = \frac{X_{\text{mouse}}}{\text{Scale}_X}, \quad Y_{\text{virtual}} = \frac{Y_{\text{mouse}}}{\text{Scale}_Y}$$
-Menjamin akurasi klik tombol dan rendering antarmuka saat jendela diubah ukurannya (*dynamic resize / maximize*).
+* **X_virtual** = `X_mouse / Scale_X`
+* **Y_virtual** = `Y_mouse / Scale_Y`
+
+Perhitungan ini menjamin akurasi klik tombol dan rendering antarmuka tetap presisi saat jendela diubah ukurannya (*dynamic resize / maximize*).
 
 ---
 
