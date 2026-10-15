@@ -1,7 +1,6 @@
 package model;
 
 import java.awt.Graphics2D;
-import java.util.List;
 
 public abstract class Character implements SkillAction {
     private String id;
@@ -17,21 +16,24 @@ public abstract class Character implements SkillAction {
     private int attack;
     private int defense;
 
+    // Buff Defense Modifier (dari Defender)
+    public int bonusDefTimer = 0;
+    public int bonusDefAmount = 0;
+
     // Realtime 2D Engine Physics
     public float x, y;
     public float vx, vy;
     public float speed = 4.0f;
     public int size = 32;
 
-    // Cooldown Timers (60 frame/tick = 1 detik)
+    // Cooldown Timers
     public int skillCdMax = 180;
     public int skillCdCurrent = 0;
     public int ultCdMax = 600;
     public int ultCdCurrent = 0;
 
-    // Invincibility Frames (Kebal sementara setelah terkena serangan)
     public int iFrameTimer = 0;
-    public static final int IFRAME_DURATION = 35; // ~0.58 detik kebal
+    public static final int IFRAME_DURATION = 35;
 
     public Character(String id, String name, String rarity, int maxHp, int attack, int defense) {
         this.id = id;
@@ -48,18 +50,27 @@ public abstract class Character implements SkillAction {
         this.y = 200;
     }
 
-    public void updatePhysics() {
-        x += vx;
-        y += vy;
-
-        // Batas arena
-        x = Math.max(20, Math.min(880, x));
-        y = Math.max(20, Math.min(540, y));
-
-        // Cooldown tick
+    // Cooldown berjalan terus untuk SEMUA hero di party
+    public void tickCooldown() {
         if (skillCdCurrent > 0) skillCdCurrent--;
         if (ultCdCurrent > 0) ultCdCurrent--;
         if (iFrameTimer > 0) iFrameTimer--;
+        if (bonusDefTimer > 0) {
+            bonusDefTimer--;
+            if (bonusDefTimer == 0) bonusDefAmount = 0;
+        }
+    }
+
+    public void updatePhysics() {
+        x += vx;
+        y += vy;
+        x = Math.max(20, Math.min(880, x));
+        y = Math.max(20, Math.min(540, y));
+    }
+
+    public void applyDefBuff(int bonus, int durationTicks) {
+        this.bonusDefAmount = bonus;
+        this.bonusDefTimer = durationTicks;
     }
 
     public void gainExp(int amount) {
@@ -72,26 +83,7 @@ public abstract class Character implements SkillAction {
             currentHp = maxHp;
             attack += 40;
             defense += 15;
-            System.out.println(name + " LEVEL UP! Level: " + level);
         }
-    }
-
-    public void heal(int amount) {
-        this.currentHp = Math.min(this.maxHp, this.currentHp + amount);
-    }
-
-    public void takeDamage(int dmg) {
-        // Abaikan damage jika masih dalam masa kebal (I-Frame)
-        if (iFrameTimer > 0) return;
-
-        int finalDmg = Math.max(5, dmg - (defense / 3));
-        this.currentHp = Math.max(0, this.currentHp - finalDmg);
-        this.iFrameTimer = IFRAME_DURATION; // Aktifkan waktu kebal
-    }
-
-    public void reviveFull() {
-        this.currentHp = this.maxHp;
-        this.iFrameTimer = 0;
     }
 
     public void levelUpManual() {
@@ -103,13 +95,31 @@ public abstract class Character implements SkillAction {
     }
 
     public int getUpgradeCost() {
-        return level * 300; // Biaya credits makin tinggi tiap level
+        return level * 300;
+    }
+
+    public void heal(int amount) {
+        this.currentHp = Math.min(this.maxHp, this.currentHp + amount);
+    }
+
+    public void takeDamage(int dmg) {
+        if (iFrameTimer > 0) return;
+        int totalDef = defense + bonusDefAmount;
+        int finalDmg = Math.max(5, dmg - (totalDef / 3));
+        this.currentHp = Math.max(0, this.currentHp - finalDmg);
+        this.iFrameTimer = IFRAME_DURATION;
+    }
+
+    public void reviveFull() {
+        this.currentHp = this.maxHp;
+        this.iFrameTimer = 0;
+        this.bonusDefAmount = 0;
+        this.bonusDefTimer = 0;
     }
 
     public abstract void draw(Graphics2D g2);
     public abstract String getRole();
 
-    // Getters & Setters
     public String getId() { return id; }
     public String getName() { return name; }
     public String getRarity() { return rarity; }
@@ -117,6 +127,6 @@ public abstract class Character implements SkillAction {
     public int getCurrentHp() { return currentHp; }
     public int getMaxHp() { return maxHp; }
     public int getAttack() { return attack; }
-    public int getDefense() { return defense; }
+    public int getDefense() { return defense + bonusDefAmount; }
     public boolean isAlive() { return currentHp > 0; }
 }

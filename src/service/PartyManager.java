@@ -1,6 +1,9 @@
 package service;
 
 import model.Character;
+import model.Defender;
+import model.Healer;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +20,61 @@ public class PartyManager {
         if (activeParty.size() >= MAX_PARTY_SIZE) return false;
         if (activeParty.contains(hero)) return false;
         activeParty.add(hero);
+        syncPartyReferences();
         return true;
+    }
+
+    public void replacePartyMember(int slotIndex, Character newHero) {
+        if (newHero == null) return;
+        // Jika hero sudah ada di party di slot lain, abaikan
+        if (activeParty.contains(newHero)) return;
+
+        if (slotIndex >= 0 && slotIndex < activeParty.size()) {
+            activeParty.set(slotIndex, newHero);
+        } else if (activeParty.size() < MAX_PARTY_SIZE) {
+            activeParty.add(newHero);
+        }
+        syncPartyReferences();
+    }
+
+    // Berikan referensi seluruh party ke Healer agar skill heal memulihkan semua hero
+    public void syncPartyReferences() {
+        for (Character c : activeParty) {
+            if (c instanceof Healer) {
+                ((Healer) c).setPartyReference(activeParty);
+            }
+        }
+    }
+
+    // Mengurangi cooldown untuk SEMUA hero di party setiap tick
+    public void tickAllCooldowns() {
+        for (Character c : activeParty) {
+            c.tickCooldown();
+        }
+    }
+
+    // Menerapkan buff Defender ke Main DPS saat swap
+    public void switchHero(int index) {
+        if (index >= 0 && index < activeParty.size()) {
+            Character current = getActiveHero();
+            Character next = activeParty.get(index);
+            if (next != null && next.isAlive()) {
+                if (current != null) {
+                    next.x = current.x;
+                    next.y = current.y;
+
+                    // Jika hero sebelumnya adalah Defender dan punya buff shield aktif, oper ke hero berikutnya
+                    if (current instanceof Defender && current.bonusDefTimer > 0) {
+                        next.applyDefBuff(current.bonusDefAmount, current.bonusDefTimer);
+                    }
+                }
+                this.activeIndex = index;
+            }
+        }
+    }
+
+    public void setActiveIndex(int index) {
+        switchHero(index);
     }
 
     public boolean isPartyFull() {
@@ -30,22 +87,6 @@ public class PartyManager {
         return activeParty.get(activeIndex);
     }
 
-    public void switchHero(int index) {
-        if (index >= 0 && index < activeParty.size()) {
-            Character current = getActiveHero();
-            Character next = activeParty.get(index);
-            // Hanya bisa ganti ke hero yang masih hidup
-            if (next != null && next.isAlive()) {
-                if (current != null) {
-                    next.x = current.x;
-                    next.y = current.y;
-                }
-                this.activeIndex = index;
-            }
-        }
-    }
-
-    // Cek apakah semua hero di dalam party sudah gugur
     public boolean isAllPartyDead() {
         if (activeParty.isEmpty()) return true;
         for (Character c : activeParty) {
@@ -54,24 +95,12 @@ public class PartyManager {
         return true;
     }
 
-    // Pemulihan HP seluruh party saat kembali ke Hub
     public void reviveAllParty() {
         for (Character c : activeParty) {
             c.reviveFull();
         }
     }
 
-    public List<Character> getActiveParty() {
-        return activeParty;
-    }
-
-    public int getActiveIndex() {
-        return activeIndex;
-    }
-
-    public void setActiveIndex(int index) {
-        if (index >= 0 && index < activeParty.size()) {
-            this.activeIndex = index;
-        }
-    }
+    public List<Character> getActiveParty() { return activeParty; }
+    public int getActiveIndex() { return activeIndex; }
 }

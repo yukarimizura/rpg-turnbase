@@ -25,6 +25,10 @@ public class CombatEngine {
 
     public GameState updateCombat(PartyManager party, StageManager stage, PlayerProfile profile, 
                                   InputHandler input, List<Enemy> enemies, Runnable onRespawnCreeps) {
+        
+        // 1. Cooldown berjalan terus untuk SEMUA hero di party (aktif maupun cadangan)
+        party.tickAllCooldowns();
+
         Character hero = party.getActiveHero();
         if (hero == null || !hero.isAlive()) {
             boolean replaced = false;
@@ -39,16 +43,19 @@ public class CombatEngine {
             if (!replaced || party.isAllPartyDead()) return GameState.GAME_OVER;
         }
 
+        // 2. Ganti hero via angka 1 - 5
         if (input.selectedHeroSlot != -1) {
             party.switchHero(input.selectedHeroSlot);
             input.selectedHeroSlot = -1;
+            hero = party.getActiveHero();
         }
 
+        // 3. Gerakan WASD
         hero.vx = (input.left ? -hero.speed : 0) + (input.right ? hero.speed : 0);
         hero.vy = (input.up ? -hero.speed : 0) + (input.down ? hero.speed : 0);
         hero.updatePhysics();
 
-        // Skill Q & R dengan pemicu VFX & Damage Number
+        // 4. Skill Q & R dengan pemicu VFX
         if (input.skillCast && hero.skillCdCurrent == 0) {
             vfxList.add(new VFXEffect(hero.x, hero.y, 60, Color.CYAN));
             hero.castSkill(enemies);
@@ -60,6 +67,7 @@ public class CombatEngine {
             input.ultCast = false;
         }
 
+        // 5. Spawn Boss (Tombol B)
         if (input.bossChallengeKey && stage.canChallengeBoss(party.getActiveParty()) && !stage.isBossActive()) {
             enemies.clear();
             enemies.add(new Enemy(475, 200, true, stage.getCurrentStage()));
@@ -68,13 +76,13 @@ public class CombatEngine {
             input.bossChallengeKey = false;
         }
 
-        // Loop collision & damage
+        // 6. Loop musuh, serangan, dan tabrakan
         Iterator<Enemy> it = enemies.iterator();
         while (it.hasNext()) {
             Enemy en = it.next();
             en.updateAI(hero.x, hero.y);
 
-            // Eksekusi Burst AoE jika telegraph selesai
+            // Eksekusi Burst AoE jika telegraph charge boss selesai
             if (en.isBoss && en.burstReady) {
                 en.burstReady = false;
                 vfxList.add(new VFXEffect(en.x, en.y, en.telegraphRadius, Color.RED));
@@ -100,12 +108,14 @@ public class CombatEngine {
             if (en.currentHp <= 0) {
                 damageTexts.add(new DamageText(en.x, en.y - 10, "CRIT! " + (hero.getAttack() * 2), Color.ORANGE));
                 hero.gainExp(en.expReward);
-                int g = en.isBoss ? 300 : 20, c = en.isBoss ? 1500 : 120;
+                int g = en.isBoss ? 300 : 20;
+                int c = en.isBoss ? 1500 : 120;
                 profile.addGems(g);
                 profile.addCredits(c);
 
                 if (en.isBoss) {
-                    victoryGems = g; victoryCredits = c;
+                    victoryGems = g;
+                    victoryCredits = c;
                     stage.onBossDefeated();
                     it.remove();
                     return GameState.VICTORY;
@@ -115,7 +125,7 @@ public class CombatEngine {
             }
         }
 
-        // Update lifecycle VFX & Damage Text
+        // 7. Update status animasi Damage Text dan VFX
         damageTexts.removeIf(dt -> { dt.update(); return dt.isExpired(); });
         vfxList.removeIf(vfx -> { vfx.update(); return vfx.isExpired(); });
 
