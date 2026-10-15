@@ -98,7 +98,15 @@ public class GameCanvas extends JPanel {
             else if (btn.btn1x.contains(m)) gachaHandler.handlePull(1, 160, profile, gacha, party);
             else if (btn.btn10x.contains(m)) gachaHandler.handlePull(10, 1600, profile, gacha, party);
         } else if (currentState == GameState.PARTY || currentState == GameState.BATTLE) {
-            if (btn.btnBack.contains(m)) currentState = GameState.LOBBY;
+            if (btn.btnBack.contains(m)) {
+                currentState = GameState.LOBBY;
+            } else {
+                int clickedIndex =  PartyScreen.getClickedCardIndex(m, party.getActiveParty().size());
+                if(clickedIndex != -1) {
+                    party.setActiveIndex(clickedIndex);
+                }
+
+            }
         } else if (currentState == GameState.VICTORY || currentState == GameState.GAME_OVER) {
             if (btn.btnReturn.contains(m)) {
                 party.reviveAllParty();

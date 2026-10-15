@@ -68,4 +68,10 @@ public class PartyManager {
     public int getActiveIndex() {
         return activeIndex;
     }
+
+    public void setActiveIndex(int index) {
+        if (index >= 0 && index < activeParty.size()) {
+            this.activeIndex = index;
+        }
+    }
 }
