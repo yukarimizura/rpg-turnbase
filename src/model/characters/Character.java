@@ -1,4 +1,6 @@
-package model;
+package model.characters;
+
+import model.characters.Character;
 
 import java.awt.Graphics2D;
 

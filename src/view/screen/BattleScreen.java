@@ -1,7 +1,5 @@
 package view.screen;
 
-import model.Character;
-import model.Enemy;
 import service.PartyManager;
 import service.StageManager;
 import view.DamageText;
@@ -13,6 +11,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.util.List;
+
+import model.Enemy;
+import model.characters.Character;
 
 public class BattleScreen {
     public static void render(Graphics2D g2, List<Enemy> enemies, PartyManager party, 

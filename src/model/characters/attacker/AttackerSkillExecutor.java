@@ -1,4 +1,7 @@
-package model;
+package model.characters.attacker;
+
+import model.Enemy;
+import model.characters.Attacker;
 
 import java.util.List;
 

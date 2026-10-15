@@ -1,15 +1,16 @@
 package engine.canvas;
 
-import model.Character;
-import model.Defender;
-import model.Healer;
-import model.Support;
 import service.PartyManager;
 import view.DamageText;
 import view.VFXEffect;
 
 import java.awt.Color;
 import java.util.List;
+
+import model.characters.Character;
+import model.characters.Defender;
+import model.characters.Healer;
+import model.characters.Support;
 
 public class SupportResonanceEngine {
     private int defTimer = 0, healTimer = 0, supTimer = 0;

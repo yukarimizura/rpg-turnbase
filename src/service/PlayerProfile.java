@@ -1,8 +1,9 @@
 package service;
 
-import model.Character;
 import java.util.ArrayList;
 import java.util.List;
+
+import model.characters.Character;
 
 public class PlayerProfile {
     private String playerName;

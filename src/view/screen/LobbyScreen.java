@@ -1,12 +1,13 @@
 package view.screen;
 
-import model.Character;
 import service.PartyManager;
 import service.PlayerProfile;
 import view.UIButton;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+
+import model.characters.Character;
 
 public class LobbyScreen {
     public static void render(Graphics2D g2, PlayerProfile profile, PartyManager party, 

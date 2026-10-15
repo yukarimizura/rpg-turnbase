@@ -1,7 +1,8 @@
 package service;
 
 import java.util.List;
-import model.Character;
+
+import model.characters.Character;
 
 public class StageManager {
     private int currentStage = 1;

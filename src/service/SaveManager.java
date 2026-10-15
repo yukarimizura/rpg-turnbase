@@ -1,7 +1,10 @@
 package service;
 
-import model.*;
-import model.Character;
+import model.characters.Character;
+import model.characters.Attacker;
+import model.characters.Defender;
+import model.characters.Healer;
+import model.characters.Support;
 
 import java.io.*;
 import java.util.ArrayList;

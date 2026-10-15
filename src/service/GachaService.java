@@ -1,12 +1,11 @@
 package service;
-
-import model.Attacker;
-import model.Character;
-import model.Defender;
-import model.Healer;
-import model.Support;
-
 import java.util.Random;
+
+import model.characters.Character;
+import model.characters.Attacker;
+import model.characters.Defender;
+import model.characters.Healer;
+import model.characters.Support;
 
 public class GachaService {
     private Random rand = new Random();

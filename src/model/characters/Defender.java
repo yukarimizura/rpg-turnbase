@@ -1,4 +1,6 @@
-package model;
+package model.characters;
+
+import model.npc.Enemy;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

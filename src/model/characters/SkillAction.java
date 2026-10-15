@@ -1,5 +1,6 @@
-package model;
+package model.characters;
 
+import model.npc.Enemy;
 import java.util.List;
 
 public interface SkillAction {

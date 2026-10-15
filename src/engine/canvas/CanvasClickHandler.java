@@ -1,8 +1,8 @@
 package engine.canvas;
 
 import engine.GameState;
-import model.Attacker;
-import model.Character;
+import model.characters.Character;
+import model.characters.Attacker;
 import service.*;
 import view.screen.PartyScreen;
 import view.screen.ProfileSelectScreen;
