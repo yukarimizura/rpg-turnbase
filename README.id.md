@@ -1,7 +1,3 @@
----
-
-### File 2: `README.id.md` (Versi Bahasa Indonesia)
-
 ```markdown
 <p align="center">
   <a href="README.md">English</a> | <b>Bahasa Indonesia</b>
