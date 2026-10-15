@@ -1,4 +1,3 @@
-```markdown
 <p align="center">
   <a href="README.md">English</a> | <b>Bahasa Indonesia</b>
 </p>
