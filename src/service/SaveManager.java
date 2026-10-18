@@ -1,10 +1,7 @@
 package service;
 
 import model.characters.Character;
-import model.characters.Attacker;
-import model.characters.Defender;
-import model.characters.Healer;
-import model.characters.Support;
+import service.save.HeroSaveSerializer;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -27,8 +24,7 @@ public class SaveManager {
         File[] files = dir.listFiles((d, name) -> name.endsWith(".save"));
         if (files != null) {
             for (File f : files) {
-                String name = f.getName().replace(".save", "");
-                list.add(name);
+                list.add(f.getName().replace(".save", ""));
             }
         }
         return list;
@@ -39,11 +35,12 @@ public class SaveManager {
         File file = new File(SAVE_DIR, profile.getPlayerName() + ".save");
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
             // Header: PlayerName, Gems, Credits, Stage, Pity
-            writer.println(profile.getPlayerName() + ";" + profile.getCyberGems() + ";" + profile.getCredits() + ";" + stage.getCurrentStage() + ";" + gacha.getPityCounter());
-            
+            writer.println(profile.getPlayerName() + ";" + profile.getCyberGems() + ";"
+                    + profile.getCredits() + ";" + stage.getCurrentStage() + ";" + gacha.getPityCounter());
+
             // Owned Heroes List
             for (Character c : profile.getOwnedHeroes()) {
-                writer.println("HERO;" + c.getId() + ";" + c.getName() + ";" + c.getRarity() + ";" + c.getSubRole() + ";" + c.getRole() + ";" + c.getLevel() + ";" + c.getMaxHp() + ";" + c.getAttack() + ";" + c.getDefense());
+                writer.println(HeroSaveSerializer.serializeHero(c));
             }
             return true;
         } catch (IOException e) {
@@ -60,7 +57,7 @@ public class SaveManager {
             String header = reader.readLine();
             if (header == null) return false;
             String[] hData = header.split(";");
-            
+
             // Reset player data
             profile.setPlayerName(hData[0]);
             profile.setGems(Integer.parseInt(hData[1]));
@@ -75,26 +72,7 @@ public class SaveManager {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("HERO;")) {
-                    String[] d = line.split(";");
-                    String id = d[1], name = d[2], rarity = d[3], sub = d[4], role = d[5];
-                    int level = Integer.parseInt(d[6]), hp = Integer.parseInt(d[7]), atk = Integer.parseInt(d[8]), def = Integer.parseInt(d[9]);
-
-                    Character c;
-                    if ("Attacker".equals(role)) {
-                        c = new Attacker(id, name, rarity, sub, hp, atk, def);
-                    } else if ("Defender".equals(role)) {
-                        c = new Defender(id, name, rarity, sub, hp, atk, def);
-                    } else if ("Healer".equals(role)) {
-                        c = new Healer(id, name, rarity, sub, hp, atk, def);
-                    } else {
-                        c = new Support(id, name, rarity, sub, hp, atk, def);
-                    }
-                    
-                    // Set level up stats
-                    for (int lv = 1; lv < level; lv++) {
-                        c.levelUpManual();
-                    }
-
+                    Character c = HeroSaveSerializer.deserializeHero(line);
                     profile.addHero(c);
                     party.addHeroToParty(c);
                 }

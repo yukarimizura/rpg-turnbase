@@ -2,11 +2,13 @@ package engine.canvas;
 
 import engine.GameState;
 import engine.InputHandler;
+import engine.canvas.combat.EnemyCombatProcessor;
 import model.characters.Character;
 import model.npc.Enemy;
 import service.PartyManager;
 import service.PlayerProfile;
 import service.StageManager;
+import view.component.CyberUIEffects;
 import view.component.DamageText;
 import view.component.VFXEffect;
 
@@ -50,14 +52,14 @@ public class CombatEngine {
             vfxList.add(new VFXEffect(hero.x, hero.y, 85, Color.CYAN));
             hero.castSkill(enemies);
             damageTexts.add(new DamageText(hero.x - 20, hero.y - 30, hero.getSubRole().toUpperCase() + " SKILL!", Color.CYAN));
-            view.component.CyberUIEffects.triggerShake(6, 3.5f);
+            CyberUIEffects.triggerShake(6, 3.5f);
             input.skillCast = false;
         }
         if (input.ultCast && hero.ultCdCurrent == 0) {
             vfxList.add(new VFXEffect(hero.x, hero.y, 165, Color.YELLOW));
             hero.castUltimate(enemies);
             damageTexts.add(new DamageText(hero.x - 30, hero.y - 45, "ULTIMATE BURST!", Color.YELLOW));
-            view.component.CyberUIEffects.triggerShake(16, 8.0f);
+            CyberUIEffects.triggerShake(16, 8.0f);
             input.ultCast = false;
         }
 
@@ -66,41 +68,12 @@ public class CombatEngine {
             enemies.add(new Enemy(475, 200, true, stage.getCurrentStage()));
             stage.startBossBattle();
             vfxList.add(new VFXEffect(475, 200, 160, Color.RED));
-            view.component.CyberUIEffects.triggerShake(18, 9.0f);
+            CyberUIEffects.triggerShake(18, 9.0f);
             input.bossChallengeKey = false;
         }
 
-        for (Enemy en : enemies) {
-            en.updateAI(hero.x, hero.y);
-
-            if (en.isBoss && en.burstReady) {
-                en.burstReady = false;
-                vfxList.add(new VFXEffect(en.x, en.y, en.telegraphRadius, Color.RED));
-                view.component.CyberUIEffects.triggerShake(14, 7.5f);
-                if (Math.hypot(en.x - hero.x, en.y - hero.y) <= en.telegraphRadius) {
-                    hero.takeDamage(en.attack * 2);
-                    damageTexts.add(new DamageText(hero.x, hero.y - 25, "BURST HIT! -" + (en.attack * 2), Color.MAGENTA));
-                }
-            }
-
-            if (Math.hypot(en.x - hero.x, en.y - hero.y) < (en.size / 2.0f + hero.size / 2.0f)) {
-                if (hero.iFrameTimer <= 0) {
-                    damageTexts.add(new DamageText(hero.x, hero.y - 15, "-" + Math.max(5, en.attack - (hero.getDefense() / 3)), Color.RED));
-                    view.component.CyberUIEffects.triggerShake(5, 3.0f);
-                }
-                hero.takeDamage(en.attack);
-            }
-
-            if (en.currentHp <= 0) {
-                vfxList.add(new VFXEffect(en.x, en.y, en.isBoss ? 140 : 45, Color.ORANGE));
-                damageTexts.add(new DamageText(en.x, en.y - 10, "ELIMINATED! +" + en.expReward + " EXP", Color.ORANGE));
-                hero.gainExp(en.expReward);
-                int g = en.isBoss ? 300 : 20, c = en.isBoss ? 1500 : 120;
-                profile.addGems(g); profile.addCredits(c);
-                if (en.isBoss) { victoryGems = g; victoryCredits = c; stage.onBossDefeated(); enemies.remove(en); return GameState.VICTORY; }
-                stage.onCreepKilled(); enemies.remove(en);
-            }
-        }
+        GameState result = EnemyCombatProcessor.processEnemies(this, hero, stage, profile, enemies);
+        if (result != GameState.BATTLE) return result;
 
         damageTexts.removeIf(dt -> { dt.update(); return dt.isExpired(); });
         vfxList.removeIf(vfx -> { vfx.update(); return vfx.isExpired(); });

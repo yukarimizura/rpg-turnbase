@@ -1,12 +1,10 @@
 package engine.handlers;
 
 import engine.GameState;
-import model.characters.Character;
-import model.characters.Attacker;
+import engine.handlers.click.ProfileClickHandler;
 import service.*;
 import view.component.CyberUIEffects;
 import view.screen.PartyScreen;
-import view.screen.ProfileSelectScreen;
 
 import javax.swing.*;
 import java.awt.Container;
@@ -21,59 +19,25 @@ public class CanvasClickHandler {
         if (CyberUIEffects.isTransitioning()) return state;
 
         if (state == GameState.PROFILE_SELECT) {
-            int clickedIdx = ProfileSelectScreen.getClickedProfileIndex(m, savedProfiles.size());
-            if (clickedIdx != -1) {
-                SaveManager.loadGame(savedProfiles.get(clickedIdx), profile, party, stage, gacha);
-                CyberUIEffects.startTransition(GameState.TITLE, "LOADING COMMANDER PROFILE...");
-                return state;
-            } else if (btn.btnNewProfile.contains(m)) {
-                String name = JOptionPane.showInputDialog(canvas, "Enter Commander Name:", "Create Profile", JOptionPane.PLAIN_MESSAGE);
-                if (name != null && !name.trim().isEmpty()) {
-                    profile.setPlayerName(name.trim());
-                    profile.setGems(1600);
-                    profile.setCredits(2000);
-                    profile.getOwnedHeroes().clear();
-                    party.getActiveParty().clear();
-                    party.getInactiveParty().clear();
-                    Attacker starter = new Attacker("HERO_" + (System.currentTimeMillis() % 1000), "Dawn Blade Dancer", "SR", "Blade Dancer", 1600, 180, 50);
-                    profile.addHero(starter);
-                    party.addHeroToParty(starter);
-                    SaveManager.saveGame(profile, party, stage, gacha);
-                    onProfileCreated.run();
-                    CyberUIEffects.startTransition(GameState.TITLE, "INITIALIZING NEW COMMANDER...");
-                    return state;
-                }
-            } else if (btn.btnQuitProfile.contains(m)) System.exit(0);
+            ProfileClickHandler.handleProfileSelectClick(m, btn, profile, party, stage, gacha, savedProfiles, canvas, onProfileCreated);
         } else if (state == GameState.TITLE) {
-            if (btn.btnStart.contains(m)) {
-                CyberUIEffects.startTransition(GameState.LOBBY, "ENTERING COMMAND HUB...");
-                return state;
-            }
+            if (btn.btnStart.contains(m)) CyberUIEffects.startTransition(GameState.LOBBY, "ENTERING COMMAND HUB...");
             if (btn.btnQuit.contains(m)) System.exit(0);
         } else if (state == GameState.LOBBY) {
             if (btn.btnBattle.contains(m)) {
                 canvas.requestFocusInWindow();
                 CyberUIEffects.startTransition(GameState.BATTLE, "DEPLOYING SQUAD TO ARENA...");
-                return state;
-            }
-            if (btn.btnGacha.contains(m)) {
+            } else if (btn.btnGacha.contains(m)) {
                 CyberUIEffects.startTransition(GameState.GACHA, "OPENING STELLAR PORTAL...");
-                return state;
-            }
-            if (btn.btnParty.contains(m)) {
+            } else if (btn.btnParty.contains(m)) {
                 CyberUIEffects.startTransition(GameState.PARTY, "LOADING SQUAD FORMATION...");
-                return state;
-            }
-            if (btn.btnSettings.contains(m)) {
+            } else if (btn.btnSettings.contains(m)) {
                 CyberUIEffects.startTransition(GameState.SETTINGS, "ACCESSING SYSTEM CONFIG...");
-                return state;
+            } else if (btn.btnTrainHero.contains(m)) {
+                ProfileClickHandler.handleTrainHero(profile, party, stage, gacha);
             }
-            if (btn.btnTrainHero.contains(m)) handleTrainHero(profile, party, stage, gacha);
         } else if (state == GameState.GACHA) {
-            if (btn.btnBack.contains(m)) {
-                CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
-                return state;
-            }
+            if (btn.btnBack.contains(m)) CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
             if (btn.btn1x.contains(m)) { gachaHandler.handlePull(1, 160, profile, gacha, party); SaveManager.saveGame(profile, party, stage, gacha); }
             if (btn.btn10x.contains(m)) { gachaHandler.handlePull(10, 1600, profile, gacha, party); SaveManager.saveGame(profile, party, stage, gacha); }
         } else if (state == GameState.PARTY) {
@@ -84,10 +48,7 @@ public class CanvasClickHandler {
             PartyScreen.handleClick(m, party, profile);
             SaveManager.saveGame(profile, party, stage, gacha);
         } else if (state == GameState.SETTINGS) {
-            if (btn.btnBack.contains(m)) {
-                CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
-                return state;
-            }
+            if (btn.btnBack.contains(m)) CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
             if (btn.btnToggleVfx.contains(m)) {
                 CyberUIEffects.vfxEnabled = !CyberUIEffects.vfxEnabled;
                 btn.btnToggleVfx.setText("VFX PARTICLES: " + (CyberUIEffects.vfxEnabled ? "ENABLED" : "DISABLED"));
@@ -99,17 +60,7 @@ public class CanvasClickHandler {
             }
         } else if (state == GameState.BATTLE && btn.btnBack.contains(m)) {
             CyberUIEffects.startTransition(GameState.LOBBY, "RETREATING TO COMMAND HUB...");
-            return state;
         }
         return state;
-    }
-
-    private static void handleTrainHero(PlayerProfile profile, PartyManager party, StageManager stage, GachaService gacha) {
-        Character leader = party.getActiveHero();
-        if (leader != null && profile.getCredits() >= leader.getUpgradeCost()) {
-            profile.addCredits(-leader.getUpgradeCost());
-            leader.levelUpManual();
-            SaveManager.saveGame(profile, party, stage, gacha);
-        }
     }
 }

@@ -1,12 +1,11 @@
 package engine;
 
-import engine.canvas.*;
-import engine.handlers.CanvasButtonManager;
-import engine.handlers.CanvasClickHandler;
-import engine.handlers.CanvasRenderer;
-import engine.handlers.GachaHandler;
+import engine.canvas.CombatEngine;
+import engine.canvas.combat.EnemyCombatProcessor;
+import engine.handlers.*;
 import model.npc.Enemy;
 import service.*;
+import view.component.CyberUIEffects;
 
 import javax.swing.JPanel;
 import java.awt.*;
@@ -17,8 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameCanvas extends JPanel {
     private static final long serialVersionUID = 1L;
-    public static final int BASE_WIDTH = 950;
-    public static final int BASE_HEIGHT = 600;
+    public static final int BASE_WIDTH = 950, BASE_HEIGHT = 600;
 
     private GameState currentState = GameState.PROFILE_SELECT;
     private PartyManager party;
@@ -39,7 +37,6 @@ public class GameCanvas extends JPanel {
         setBackground(new Color(15, 17, 23));
         setFocusable(true);
         addKeyListener(input);
-
         MouseAdapter mouse = input.getMouseListener();
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -48,47 +45,41 @@ public class GameCanvas extends JPanel {
     }
 
     public void refreshProfiles() { this.savedProfiles = SaveManager.listSavedProfiles(); }
-
-    public void spawnCreeps() {
-        enemies.clear();
-        for (int i = 0; i < 6; i++) {
-            enemies.add(new Enemy((float)(Math.random() * 800 + 70), (float)(Math.random() * 350 + 130), false, stage.getCurrentStage()));
-        }
-    }
+    public void spawnCreeps() { EnemyCombatProcessor.spawnCreepWave(enemies, stage.getCurrentStage()); }
 
     private Point getVirtualMousePoint() {
         if (input.mousePosition == null) return new Point(0, 0);
-        return new Point((int)(input.mousePosition.x / ((double)getWidth() / BASE_WIDTH)),
-                         (int)(input.mousePosition.y / ((double)getHeight() / BASE_HEIGHT)));
+        return new Point((int) (input.mousePosition.x / ((double) getWidth() / BASE_WIDTH)),
+                         (int) (input.mousePosition.y / ((double) getHeight() / BASE_HEIGHT)));
     }
 
     public void updateState() {
-        currentState = view.component.CyberUIEffects.updateTransition(currentState);
+        currentState = CyberUIEffects.updateTransition(currentState);
         Point m = getVirtualMousePoint();
         btn.updateHover(m);
 
         if (input.mouseClicked) {
-            if (!view.component.CyberUIEffects.isTransitioning()) {
+            if (!CyberUIEffects.isTransitioning()) {
                 currentState = CanvasClickHandler.handleClick(currentState, m, btn, profile, party, stage, gacha, gachaHandler, savedProfiles, this, this::refreshProfiles);
                 if ((currentState == GameState.VICTORY || currentState == GameState.GAME_OVER) && btn.btnReturn.contains(m)) {
                     party.reviveAllParty();
                     spawnCreeps();
-                    view.component.CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
+                    CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
                 }
             }
             input.mouseClicked = false;
         }
 
-        if (currentState == GameState.BATTLE && !view.component.CyberUIEffects.isTransitioning()) {
+        if (currentState == GameState.BATTLE && !CyberUIEffects.isTransitioning()) {
             if (input.escPressed) {
-                view.component.CyberUIEffects.startTransition(GameState.LOBBY, "RETREATING TO COMMAND HUB...");
+                CyberUIEffects.startTransition(GameState.LOBBY, "RETREATING TO COMMAND HUB...");
                 input.escPressed = false;
                 return;
             }
             GameState next = combat.updateCombat(party, stage, profile, input, enemies, this::spawnCreeps);
             if (next != GameState.BATTLE) {
                 if (next == GameState.VICTORY) SaveManager.saveGame(profile, party, stage, gacha);
-                view.component.CyberUIEffects.startTransition(next, next == GameState.VICTORY ? "VICTORY! SYNCHRONIZING REWARDS..." : "SQUAD FALLEN...");
+                CyberUIEffects.startTransition(next, next == GameState.VICTORY ? "VICTORY! SYNCHRONIZING REWARDS..." : "SQUAD FALLEN...");
             }
         }
     }
@@ -98,11 +89,10 @@ public class GameCanvas extends JPanel {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         AffineTransform old = g2.getTransform();
-        g2.scale((double)getWidth() / BASE_WIDTH, (double)getHeight() / BASE_HEIGHT);
+        g2.scale((double) getWidth() / BASE_WIDTH, (double) getHeight() / BASE_HEIGHT);
         CanvasRenderer.renderCurrentScreen(g2, currentState, savedProfiles, profile, party, stage, gacha, gachaHandler, btn, combat, enemies);
-        view.component.CyberUIEffects.drawTransitionOverlay(g2);
+        CyberUIEffects.drawTransitionOverlay(g2);
         g2.setTransform(old);
     }
 }

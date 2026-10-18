@@ -1,43 +1,26 @@
 package model.characters;
 
-import model.characters.Character;
 import model.characters.skills.SkillAction;
+import model.characters.stats.CharacterCombatHelper;
 
 import java.awt.Graphics2D;
 
 public abstract class Character implements SkillAction {
-    private String id;
-    private String name;
-    private String rarity;
-    private String subRole;
-    private int level;
-    private int currentExp;
-    private int expToNextLevel;
+    private String id, name, rarity, subRole;
+    private int level = 1, currentExp = 0, expToNextLevel = 100;
 
     // Stats
-    private int maxHp;
-    private int currentHp;
-    private int attack;
-    private int defense;
+    private int maxHp, currentHp, attack, defense;
 
     // Buff Modifiers
-    public int bonusDefTimer = 0;
-    public int bonusDefAmount = 0;
-    public int bonusAtkTimer = 0;
-    public int bonusAtkAmount = 0;
+    public int bonusDefTimer = 0, bonusDefAmount = 0, bonusAtkTimer = 0, bonusAtkAmount = 0;
 
     // Realtime 2D Physics
-    public float x, y;
-    public float vx, vy;
-    public float speed = 4.0f;
+    public float x = 200, y = 200, vx, vy, speed = 4.0f;
     public int size = 32;
 
     // Cooldown Timers
-    public int skillCdMax = 180;
-    public int skillCdCurrent = 0;
-    public int ultCdMax = 600;
-    public int ultCdCurrent = 0;
-
+    public int skillCdMax = 180, skillCdCurrent = 0, ultCdMax = 600, ultCdCurrent = 0;
     public int iFrameTimer = 0;
     public static final int IFRAME_DURATION = 35;
 
@@ -46,38 +29,14 @@ public abstract class Character implements SkillAction {
         this.name = name;
         this.rarity = rarity;
         this.subRole = subRole;
-        this.level = 1;
-        this.currentExp = 0;
-        this.expToNextLevel = 100;
         this.maxHp = maxHp;
         this.currentHp = maxHp;
         this.attack = attack;
         this.defense = defense;
-        this.x = 200;
-        this.y = 200;
     }
 
-    public void tickCooldown() {
-        if (skillCdCurrent > 0) skillCdCurrent--;
-        if (ultCdCurrent > 0) ultCdCurrent--;
-        if (iFrameTimer > 0) iFrameTimer--;
-
-        if (bonusDefTimer > 0) {
-            bonusDefTimer--;
-            if (bonusDefTimer == 0) bonusDefAmount = 0;
-        }
-        if (bonusAtkTimer > 0) {
-            bonusAtkTimer--;
-            if (bonusAtkTimer == 0) bonusAtkAmount = 0;
-        }
-    }
-
-    public void updatePhysics() {
-        x += vx;
-        y += vy;
-        x = Math.max(20, Math.min(880, x));
-        y = Math.max(20, Math.min(540, y));
-    }
+    public void tickCooldown() { CharacterCombatHelper.tickTimers(this); }
+    public void updatePhysics() { CharacterCombatHelper.clampArenaBounds(this); }
 
     public void applyDefBuff(int bonus, int durationTicks) {
         this.bonusDefAmount = bonus;
@@ -93,12 +52,8 @@ public abstract class Character implements SkillAction {
         currentExp += amount;
         while (currentExp >= expToNextLevel) {
             currentExp -= expToNextLevel;
-            level++;
             expToNextLevel = (int) (expToNextLevel * 1.5);
-            maxHp += 250;
-            currentHp = maxHp;
-            attack += 40;
-            defense += 15;
+            levelUpManual();
         }
     }
 
@@ -110,18 +65,12 @@ public abstract class Character implements SkillAction {
         defense += 15;
     }
 
-    public int getUpgradeCost() {
-        return level * 300;
-    }
-
-    public void heal(int amount) {
-        this.currentHp = Math.min(this.maxHp, this.currentHp + amount);
-    }
+    public int getUpgradeCost() { return level * 300; }
+    public void heal(int amount) { this.currentHp = Math.min(this.maxHp, this.currentHp + amount); }
 
     public void takeDamage(int dmg) {
         if (iFrameTimer > 0) return;
-        int totalDef = defense + bonusDefAmount;
-        int finalDmg = Math.max(5, dmg - (totalDef / 3));
+        int finalDmg = CharacterCombatHelper.calculateMitigatedDamage(dmg, getDefense());
         this.currentHp = Math.max(0, this.currentHp - finalDmg);
         this.iFrameTimer = IFRAME_DURATION;
     }
@@ -129,10 +78,8 @@ public abstract class Character implements SkillAction {
     public void reviveFull() {
         this.currentHp = this.maxHp;
         this.iFrameTimer = 0;
-        this.bonusDefAmount = 0;
-        this.bonusDefTimer = 0;
-        this.bonusAtkAmount = 0;
-        this.bonusAtkTimer = 0;
+        this.bonusDefAmount = 0; this.bonusDefTimer = 0;
+        this.bonusAtkAmount = 0; this.bonusAtkTimer = 0;
     }
 
     public abstract void draw(Graphics2D g2);
