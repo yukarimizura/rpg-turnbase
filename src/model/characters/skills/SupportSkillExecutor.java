@@ -12,10 +12,11 @@ public class SupportSkillExecutor {
     public static void executeResonance(Support support, Character vanguard, 
                                         List<VFXEffect> vfxList, List<DamageText> damageTexts) {
         if ("Chronomancer".equals(support.getSubRole())) {
-            // Chrono: Percepat CD Skill Vanguard
+            // Chrono: Percepat CD Skill & Ultimate Vanguard
             vanguard.skillCdCurrent = Math.max(0, vanguard.skillCdCurrent - 60);
+            vanguard.ultCdCurrent = Math.max(0, vanguard.ultCdCurrent - 90);
             vfxList.add(new VFXEffect(vanguard.x, vanguard.y, 50, new Color(155, 89, 182)));
-            damageTexts.add(new DamageText(vanguard.x, vanguard.y - 20, "CHRONO RECHARGE! -1s CD", new Color(155, 89, 182)));
+            damageTexts.add(new DamageText(vanguard.x, vanguard.y - 20, "CHRONO RECHARGE! -CD", new Color(155, 89, 182)));
         } else {
             // Commander Aura: Buff Attack masif (+50% ATK Support)
             int atkBonus = (int) (support.getAttack() * 0.5f);

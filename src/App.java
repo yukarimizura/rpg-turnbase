@@ -1,7 +1,7 @@
 import engine.GameCanvas;
 import engine.GameLoop;
 import engine.InputHandler;
-import model.Attacker;
+import model.characters.Attacker;
 import service.GachaService;
 import service.PartyManager;
 import service.PlayerProfile;

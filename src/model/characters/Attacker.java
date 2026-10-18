@@ -1,9 +1,8 @@
 package model.characters;
 
-import model.characters.attacker.AttackerSkillExecutor;
+import model.characters.skills.AttackerSkillExecutor;
 import model.npc.Enemy;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.List;
 
@@ -32,10 +31,7 @@ public class Attacker extends Character {
 
     @Override
     public void draw(Graphics2D g2) {
-        g2.setColor(new Color(231, 76, 60));
-        g2.fillOval((int)(x - size / 2), (int)(y - size / 2), size, size);
-        g2.setColor(Color.WHITE);
-        g2.drawOval((int)(x - size / 2), (int)(y - size / 2), size, size);
+        view.component.SpriteRenderer.drawCharacter(g2, this, x, y, 1.0f);
     }
 
     @Override

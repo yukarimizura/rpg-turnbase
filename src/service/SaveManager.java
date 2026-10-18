@@ -70,6 +70,7 @@ public class SaveManager {
 
             profile.getOwnedHeroes().clear();
             party.getActiveParty().clear();
+            party.getInactiveParty().clear();
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -95,9 +96,7 @@ public class SaveManager {
                     }
 
                     profile.addHero(c);
-                    if (!party.isPartyFull()) {
-                        party.addHeroToParty(c);
-                    }
+                    party.addHeroToParty(c);
                 }
             }
             return true;

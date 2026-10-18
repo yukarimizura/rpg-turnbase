@@ -1,7 +1,7 @@
-package model.characters.attacker;
+package model.characters.skills;
 
-import model.Enemy;
 import model.characters.Attacker;
+import model.npc.Enemy;
 
 import java.util.List;
 

@@ -1,5 +1,8 @@
 package service;
+
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import model.characters.Character;
 import model.characters.Attacker;
@@ -10,15 +13,22 @@ import model.characters.Support;
 public class GachaService {
     private Random rand = new Random();
     private int pityCounter = 0;
+    private int idSequence = 100;
     private Character lastPulledCharacter = null;
+    private List<Character> lastPulledBatch = new CopyOnWriteArrayList<>();
 
     private final String[] attackerSubRoles = {"Blade Dancer", "Ranger", "Berserker", "Spellcaster", "Artillery"};
     private final String[] defenderSubRoles = {"Guardian Shield", "Paladin Aegis"};
     private final String[] healerSubRoles   = {"Cleric Grace", "Druid Renewal"};
     private final String[] supportSubRoles  = {"Commander Aura", "Chronomancer"};
 
+    public void startNewBatch() {
+        lastPulledBatch.clear();
+    }
+
     public Character roll() {
         pityCounter++;
+        idSequence++;
         String rarity;
 
         if (pityCounter >= 50) {
@@ -30,10 +40,10 @@ public class GachaService {
             if (rarity.equals("SSR")) pityCounter = 0;
         } else {
             int rollVal = rand.nextInt(100);
-            if (rollVal < 2) {
+            if (rollVal < 3) {
                 rarity = "SSR";
                 pityCounter = 0;
-            } else if (rollVal < 15) {
+            } else if (rollVal < 18) {
                 rarity = "SR";
             } else {
                 rarity = "R";
@@ -48,7 +58,7 @@ public class GachaService {
         }
 
         int roleType = rand.nextInt(4); // 0: Attacker, 1: Defender, 2: Healer, 3: Support
-        String heroId = "HERO_" + (System.currentTimeMillis() % 10000);
+        String heroId = "HERO_" + (System.currentTimeMillis() % 10000) + "_" + idSequence;
         Character pulled;
 
         if (roleType == 0) {
@@ -66,10 +76,12 @@ public class GachaService {
         }
 
         this.lastPulledCharacter = pulled;
+        this.lastPulledBatch.add(pulled);
         return pulled;
     }
 
     public int getPityCounter() { return pityCounter; }
     public Character getLastPulledCharacter() { return lastPulledCharacter; }
+    public List<Character> getLastPulledBatch() { return lastPulledBatch; }
     public void setPityCounter(int pity) { this.pityCounter = pity; }
 }

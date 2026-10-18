@@ -1,7 +1,7 @@
 package service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import model.characters.Character;
 
@@ -15,7 +15,7 @@ public class PlayerProfile {
         this.playerName = name;
         this.cyberGems = 1600; // Starter modal untuk 10x Pull
         this.credits = 10000;
-        this.ownedHeroes = new ArrayList<>();
+        this.ownedHeroes = new CopyOnWriteArrayList<>();
     }
 
     public void addHero(Character c) {

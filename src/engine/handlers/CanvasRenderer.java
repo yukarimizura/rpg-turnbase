@@ -1,7 +1,8 @@
-package engine.canvas;
+package engine.handlers;
 
 import engine.GameState;
-import model.Enemy;
+import engine.canvas.CombatEngine;
+import model.npc.Enemy;
 import service.*;
 import view.screen.*;
 

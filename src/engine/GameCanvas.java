@@ -1,17 +1,22 @@
 package engine;
 
 import engine.canvas.*;
-import model.Enemy;
+import engine.handlers.CanvasButtonManager;
+import engine.handlers.CanvasClickHandler;
+import engine.handlers.CanvasRenderer;
+import engine.handlers.GachaHandler;
+import model.npc.Enemy;
 import service.*;
 
 import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameCanvas extends JPanel {
+    private static final long serialVersionUID = 1L;
     public static final int BASE_WIDTH = 950;
     public static final int BASE_HEIGHT = 600;
 
@@ -21,8 +26,8 @@ public class GameCanvas extends JPanel {
     private PlayerProfile profile;
     private GachaService gacha;
     private InputHandler input;
-    private List<Enemy> enemies = new ArrayList<>();
-    private List<String> savedProfiles = new ArrayList<>();
+    private List<Enemy> enemies = new CopyOnWriteArrayList<>();
+    private List<String> savedProfiles = new CopyOnWriteArrayList<>();
 
     private CanvasButtonManager btn = new CanvasButtonManager();
     private CombatEngine combat = new CombatEngine();
@@ -58,23 +63,33 @@ public class GameCanvas extends JPanel {
     }
 
     public void updateState() {
+        currentState = view.component.CyberUIEffects.updateTransition(currentState);
         Point m = getVirtualMousePoint();
         btn.updateHover(m);
 
         if (input.mouseClicked) {
-            currentState = CanvasClickHandler.handleClick(currentState, m, btn, profile, party, stage, gacha, gachaHandler, savedProfiles, this, this::refreshProfiles);
-            if ((currentState == GameState.VICTORY || currentState == GameState.GAME_OVER) && btn.btnReturn.contains(m)) {
-                party.reviveAllParty();
-                spawnCreeps();
-                currentState = GameState.LOBBY;
+            if (!view.component.CyberUIEffects.isTransitioning()) {
+                currentState = CanvasClickHandler.handleClick(currentState, m, btn, profile, party, stage, gacha, gachaHandler, savedProfiles, this, this::refreshProfiles);
+                if ((currentState == GameState.VICTORY || currentState == GameState.GAME_OVER) && btn.btnReturn.contains(m)) {
+                    party.reviveAllParty();
+                    spawnCreeps();
+                    view.component.CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
+                }
             }
             input.mouseClicked = false;
         }
 
-        if (currentState == GameState.BATTLE) {
-            if (input.escPressed) { currentState = GameState.LOBBY; input.escPressed = false; return; }
-            currentState = combat.updateCombat(party, stage, profile, input, enemies, this::spawnCreeps);
-            if (currentState == GameState.VICTORY) SaveManager.saveGame(profile, party, stage, gacha);
+        if (currentState == GameState.BATTLE && !view.component.CyberUIEffects.isTransitioning()) {
+            if (input.escPressed) {
+                view.component.CyberUIEffects.startTransition(GameState.LOBBY, "RETREATING TO COMMAND HUB...");
+                input.escPressed = false;
+                return;
+            }
+            GameState next = combat.updateCombat(party, stage, profile, input, enemies, this::spawnCreeps);
+            if (next != GameState.BATTLE) {
+                if (next == GameState.VICTORY) SaveManager.saveGame(profile, party, stage, gacha);
+                view.component.CyberUIEffects.startTransition(next, next == GameState.VICTORY ? "VICTORY! SYNCHRONIZING REWARDS..." : "SQUAD FALLEN...");
+            }
         }
     }
 
@@ -87,6 +102,7 @@ public class GameCanvas extends JPanel {
         AffineTransform old = g2.getTransform();
         g2.scale((double)getWidth() / BASE_WIDTH, (double)getHeight() / BASE_HEIGHT);
         CanvasRenderer.renderCurrentScreen(g2, currentState, savedProfiles, profile, party, stage, gacha, gachaHandler, btn, combat, enemies);
+        view.component.CyberUIEffects.drawTransitionOverlay(g2);
         g2.setTransform(old);
     }
 }

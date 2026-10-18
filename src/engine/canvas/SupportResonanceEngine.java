@@ -11,26 +11,37 @@ import view.component.VFXEffect;
 import java.util.List;
 
 public class SupportResonanceEngine {
-    private int defTimer = 0, healTimer = 0, supTimer = 0;
 
     public void updateResonance(PartyManager party, Character vanguard, List<VFXEffect> vfxList, List<DamageText> damageTexts) {
-        List<Character> squad = party.getActiveParty();
-        if (squad.size() <= 1) return;
+        if (vanguard == null || !vanguard.isAlive()) return;
+        List<Character> supportSquad = party.getInactiveParty();
+        if (supportSquad.isEmpty()) return;
 
-        defTimer++; healTimer++; supTimer++;
-        for (int i = 1; i < squad.size(); i++) {
-            Character c = squad.get(i);
-            if (c == null || !c.isAlive()) continue;
+        for (Character c : supportSquad) {
+            if (c == null || !c.isAlive() || c.skillCdCurrent > 0) continue;
 
-            if (c instanceof Defender && defTimer >= 420) {
-                ((Defender) c).triggerResonance(vanguard, vfxList, damageTexts);
-                defTimer = 0;
-            } else if (c instanceof Healer && healTimer >= 300 && vanguard.getCurrentHp() < vanguard.getMaxHp() * 0.8f) {
-                ((Healer) c).triggerResonance(vanguard, vfxList, damageTexts);
-                healTimer = 0;
-            } else if (c instanceof Support && supTimer >= 540) {
-                ((Support) c).triggerResonance(vanguard, vfxList, damageTexts);
-                supTimer = 0;
+            if (c instanceof Healer) {
+                // Langsung heal saat HP Active DPS turun dan cooldown Healer siap
+                if (vanguard.getCurrentHp() < vanguard.getMaxHp()) {
+                    ((Healer) c).triggerResonance(vanguard, vfxList, damageTexts);
+                }
+            } else if (c instanceof Defender) {
+                // Langsung pasang shield/buff DEF saat buff DEF Active DPS habis dan cooldown Defender siap
+                if (vanguard.bonusDefTimer <= 0) {
+                    ((Defender) c).triggerResonance(vanguard, vfxList, damageTexts);
+                }
+            } else if (c instanceof Support) {
+                if ("Chronomancer".equals(c.getSubRole())) {
+                    // Langsung percepat cooldown saat Skill/Ult Active DPS sedang cooldown
+                    if (vanguard.skillCdCurrent > 0 || vanguard.ultCdCurrent > 0) {
+                        ((Support) c).triggerResonance(vanguard, vfxList, damageTexts);
+                    }
+                } else {
+                    // Commander Aura: langsung pasang buff ATK saat buff ATK Active DPS habis
+                    if (vanguard.bonusAtkTimer <= 0) {
+                        ((Support) c).triggerResonance(vanguard, vfxList, damageTexts);
+                    }
+                }
             }
         }
     }

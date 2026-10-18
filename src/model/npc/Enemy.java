@@ -1,7 +1,5 @@
-package model;
+package model.npc;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class Enemy {
@@ -44,73 +42,71 @@ public class Enemy {
         }
     }
 
+    private int aiTick = (int) (Math.random() * 120);
+    private int dashCooldown = 0;
+
     public void updateAI(float targetX, float targetY) {
+        aiTick++;
+        if (dashCooldown > 0) dashCooldown--;
+
         float dx = targetX - x;
         float dy = targetY - y;
         float dist = (float) Math.hypot(dx, dy);
 
         if (isBoss) {
+            boolean enraged = currentHp < maxHp * 0.5f;
+            float bossSpeed = enraged ? speed * 1.45f : speed;
+
             // Boss AI: Charge Attack Cycle
             if (isCharging) {
-                chargeTimer++;
+                chargeTimer += enraged ? 2 : 1;
                 if (chargeTimer >= CHARGE_MAX) {
                     burstReady = true;
                     isCharging = false;
                     chargeTimer = 0;
                 }
-                return; // Boss diam di tempat saat charging jurus
+                return;
             } else {
-                // Tiap jarak dekat, 1.5% chance per frame memicu telegraph attack
-                if (dist < 180 && Math.random() < 0.015) {
+                if (dist < 190 && Math.random() < (enraged ? 0.025 : 0.015)) {
                     isCharging = true;
                     chargeTimer = 0;
                     return;
                 }
+                // Tactical lunge when medium distance
+                if (dist > 140 && dist < 280 && dashCooldown == 0 && Math.random() < 0.02) {
+                    x += (dx / dist) * 28f;
+                    y += (dy / dist) * 28f;
+                    dashCooldown = 120;
+                }
             }
+
+            if (dist > 2) {
+                x += (dx / dist) * bossSpeed;
+                y += (dy / dist) * bossSpeed;
+            }
+            return;
         }
 
-        // Kejar Hero
+        // Creep AI: Tactical flanking weave + short lunge
         if (dist > 2) {
-            x += (dx / dist) * speed;
-            y += (dy / dist) * speed;
+            float dirX = dx / dist;
+            float dirY = dy / dist;
+            // Perpendicular strafe wave so creeps don't just walk in a straight line
+            float strafe = (float) Math.sin(aiTick * 0.08f + this.hashCode() % 9) * 0.45f;
+            float moveX = dirX - dirY * strafe;
+            float moveY = dirY + dirX * strafe;
+
+            float boost = (dist < 110 && dashCooldown == 0) ? 2.2f : 1.0f;
+            if (boost > 1.5f) dashCooldown = 90;
+
+            x += moveX * speed * boost;
+            y += moveY * speed * boost;
+            x = Math.max(25, Math.min(925, x));
+            y = Math.max(60, Math.min(520, y));
         }
     }
 
     public void draw(Graphics2D g2) {
-        // Render Red Warning Telegraph Zone
-        if (isBoss && isCharging) {
-            float progress = (float) chargeTimer / CHARGE_MAX;
-            int alphaFill = (int) (progress * 90);
-            g2.setColor(new Color(255, 0, 0, Math.min(255, alphaFill)));
-            g2.fillOval((int) (x - telegraphRadius), (int) (y - telegraphRadius), (int) (telegraphRadius * 2), (int) (telegraphRadius * 2));
-
-            g2.setColor(new Color(255, 50, 50, 200));
-            g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{6}, 0));
-            g2.drawOval((int) (x - telegraphRadius), (int) (y - telegraphRadius), (int) (telegraphRadius * 2), (int) (telegraphRadius * 2));
-        }
-
-        // Render Badan Musuh / Boss
-        if (isBoss) {
-            g2.setColor(new Color(180, 40, 40));
-            g2.fillOval((int) (x - size / 2), (int) (y - size / 2), size, size);
-            g2.setColor(new Color(255, 215, 0));
-            g2.setStroke(new BasicStroke(2.5f));
-            g2.drawOval((int) (x - size / 2), (int) (y - size / 2), size, size);
-        } else {
-            g2.setColor(new Color(120, 120, 120));
-            g2.fillOval((int) (x - size / 2), (int) (y - size / 2), size, size);
-        }
-
-        // Health Bar di atas kepala
-        int barW = size + 16;
-        int barH = 5;
-        int barX = (int) (x - barW / 2);
-        int barY = (int) (y - size / 2 - 10);
-
-        g2.setColor(new Color(40, 40, 40, 180));
-        g2.fillRect(barX, barY, barW, barH);
-        float hpRatio = (float) currentHp / maxHp;
-        g2.setColor(isBoss ? new Color(230, 40, 40) : new Color(46, 204, 113));
-        g2.fillRect(barX, barY, (int) (barW * hpRatio), barH);
+        view.component.SpriteRenderer.drawEnemy(g2, this);
     }
 }

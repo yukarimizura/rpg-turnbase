@@ -11,7 +11,7 @@ public class StageManager {
     private boolean bossActive = false;
 
     public boolean canChallengeBoss(List<Character> party) {
-        return party.size() >= PartyManager.MAX_PARTY_SIZE && creepsDefeated >= CREEPS_REQUIRED;
+        return !party.isEmpty() && creepsDefeated >= CREEPS_REQUIRED;
     }
 
     public void onCreepKilled() {

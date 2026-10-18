@@ -1,6 +1,7 @@
 package model.characters;
 
 import model.characters.Character;
+import model.characters.skills.SkillAction;
 
 import java.awt.Graphics2D;
 

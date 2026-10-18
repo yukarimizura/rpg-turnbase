@@ -5,16 +5,17 @@ import model.npc.Enemy;
 import view.component.DamageText;
 import view.component.VFXEffect;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.List;
 
 public class Support extends Character {
     public Support(String id, String name, String rarity, String subRole, int maxHp, int attack, int defense) {
         super(id, name, rarity, subRole, maxHp, attack, defense);
+        this.skillCdMax = "Chronomancer".equals(subRole) ? 160 : 200;
     }
 
     public void triggerResonance(Character vanguard, List<VFXEffect> vfx, List<DamageText> texts) {
+        this.skillCdCurrent = this.skillCdMax;
         SupportSkillExecutor.executeResonance(this, vanguard, vfx, texts);
     }
 
@@ -26,8 +27,7 @@ public class Support extends Character {
 
     @Override
     public void draw(Graphics2D g2) {
-        g2.setColor(new Color(241, 196, 15));
-        g2.fillOval((int) (x - size / 2), (int) (y - size / 2), size, size);
+        view.component.SpriteRenderer.drawCharacter(g2, this, x, y, 1.0f);
     }
 
     @Override
