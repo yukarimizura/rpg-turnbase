@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 
 public class App {
     public static void main(String[] args) {
+        System.setProperty("sun.java2d.opengl", "true");
         SwingUtilities.invokeLater(() -> {
             PlayerProfile profile = new PlayerProfile("Commander");
             PartyManager party = new PartyManager();

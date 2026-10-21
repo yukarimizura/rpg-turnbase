@@ -94,5 +94,6 @@ public class GameCanvas extends JPanel {
         CanvasRenderer.renderCurrentScreen(g2, currentState, savedProfiles, profile, party, stage, gacha, gachaHandler, btn, combat, enemies);
         CyberUIEffects.drawTransitionOverlay(g2);
         g2.setTransform(old);
+        Toolkit.getDefaultToolkit().sync();
     }
 }
