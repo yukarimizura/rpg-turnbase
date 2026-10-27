@@ -1,5 +1,6 @@
 package engine.canvas.combat;
 
+import engine.GameCanvas;
 import engine.GameState;
 import engine.canvas.CombatEngine;
 import model.characters.Character;
@@ -17,9 +18,14 @@ public class EnemyCombatProcessor {
 
     public static void spawnCreepWave(List<Enemy> enemies, int stageLevel) {
         enemies.clear();
-        for (int i = 0; i < 6; i++) {
-            enemies.add(new Enemy((float) (Math.random() * 800 + 70),
-                    (float) (Math.random() * 350 + 130), false, stageLevel));
+        int creepCount = 8;
+
+        for (int i = 0; i < creepCount; i++) {
+            // Sebar titik spawn musuh di seluruh arena 1920x1080 (menghindari HUD Atas & Bawah)
+            float spawnX = 200 + (float) (Math.random() * (GameCanvas.BASE_WIDTH - 400)); // 200 s/d 1720
+            float spawnY = 220 + (float) (Math.random() * (GameCanvas.BASE_HEIGHT - 460)); // 220 s/d 840
+
+            enemies.add(new Enemy(spawnX, spawnY, false, stageLevel));
         }
     }
 
@@ -28,6 +34,11 @@ public class EnemyCombatProcessor {
         for (Enemy en : enemies) {
             en.updateAI(hero.x, hero.y);
 
+            // Jaga agar musuh bergerak tetap dalam arena pertempuran 1920x1080
+            en.x = Math.max(60, Math.min(GameCanvas.BASE_WIDTH - 60, en.x));
+            en.y = Math.max(200, Math.min(GameCanvas.BASE_HEIGHT - 200, en.y));
+
+            // Boss Telegraph Burst Attack
             if (en.isBoss && en.burstReady) {
                 en.burstReady = false;
                 combat.vfxList.add(new VFXEffect(en.x, en.y, en.telegraphRadius, Color.RED));
@@ -38,6 +49,7 @@ public class EnemyCombatProcessor {
                 }
             }
 
+            // Hitreg / Collision Detection
             if (Math.hypot(en.x - hero.x, en.y - hero.y) < (en.size / 2.0f + hero.size / 2.0f)) {
                 if (hero.iFrameTimer <= 0) {
                     combat.damageTexts.add(new DamageText(hero.x, hero.y - 15, "-" + Math.max(5, en.attack - (hero.getDefense() / 3)), Color.RED));
@@ -46,13 +58,17 @@ public class EnemyCombatProcessor {
                 hero.takeDamage(en.attack);
             }
 
+            // Enemy Death / Elimination
             if (en.currentHp <= 0) {
                 combat.vfxList.add(new VFXEffect(en.x, en.y, en.isBoss ? 140 : 45, Color.ORANGE));
                 combat.damageTexts.add(new DamageText(en.x, en.y - 10, "ELIMINATED! +" + en.expReward + " EXP", Color.ORANGE));
                 hero.gainExp(en.expReward);
-                int g = en.isBoss ? 300 : 20, c = en.isBoss ? 1500 : 120;
+                
+                int g = en.isBoss ? 300 : 20;
+                int c = en.isBoss ? 1500 : 120;
                 profile.addGems(g);
                 profile.addCredits(c);
+                
                 if (en.isBoss) {
                     combat.victoryGems = g;
                     combat.victoryCredits = c;
@@ -60,6 +76,7 @@ public class EnemyCombatProcessor {
                     enemies.remove(en);
                     return GameState.VICTORY;
                 }
+                
                 stage.onCreepKilled();
                 enemies.remove(en);
             }

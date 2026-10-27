@@ -1,5 +1,6 @@
 package view.component.cyber;
 
+import engine.GameCanvas;
 import java.awt.*;
 
 public class CyberBackgroundRenderer {
@@ -7,48 +8,54 @@ public class CyberBackgroundRenderer {
     public static void drawCyberBackground(Graphics2D g2, boolean isBattleArena, boolean vfxEnabled) {
         long tick = System.currentTimeMillis() / 20;
 
+        // Gunakan acuan batas Canvas resmi 1920x1080
+        int width = GameCanvas.BASE_WIDTH;   // 1920
+        int height = GameCanvas.BASE_HEIGHT; // 1080
+        int centerX = width / 2;             // 960
+        int centerY = height / 2;            // 540
+
         if (isBattleArena) {
-            GradientPaint gp = new GradientPaint(0, 0, new Color(14, 18, 28), 0, 600, new Color(22, 16, 34));
+            GradientPaint gp = new GradientPaint(0, 0, new Color(14, 18, 28), 0, height, new Color(22, 16, 34));
             g2.setPaint(gp);
-            g2.fillRect(0, 0, 950, 600);
+            g2.fillRect(0, 0, width, height);
 
             // Tactical Arena Floor Grid
             g2.setColor(new Color(0, 210, 255, 18));
             g2.setStroke(new BasicStroke(1.0f));
-            for (int x = 0; x < 950; x += 50) {
-                g2.drawLine(x, 0, x, 600);
+            for (int x = 0; x < width; x += 50) {
+                g2.drawLine(x, 0, x, height);
             }
-            for (int y = 0; y < 600; y += 50) {
-                g2.drawLine(0, y, 950, y);
+            for (int y = 0; y < height; y += 50) {
+                g2.drawLine(0, y, width, y);
             }
 
-            // Center Arena Tactical Ring
+            // Center Arena Tactical Ring (Di tengah layar 1920x1080)
             g2.setColor(new Color(0, 210, 255, 28));
             g2.setStroke(new BasicStroke(1.5f));
-            g2.drawOval(475 - 150, 300 - 150, 300, 300);
-            g2.drawOval(475 - 80, 300 - 80, 160, 160);
+            g2.drawOval(centerX - 250, centerY - 250, 500, 500);
+            g2.drawOval(centerX - 130, centerY - 130, 260, 260);
         } else {
-            GradientPaint gp = new GradientPaint(0, 0, new Color(11, 14, 24), 0, 600, new Color(26, 15, 42));
+            GradientPaint gp = new GradientPaint(0, 0, new Color(11, 14, 24), 0, height, new Color(26, 15, 42));
             g2.setPaint(gp);
-            g2.fillRect(0, 0, 950, 600);
+            g2.fillRect(0, 0, width, height);
 
             // Moving Cyber Grid
             int offset = (int) (tick % 45);
             g2.setColor(new Color(0, 195, 255, 20));
             g2.setStroke(new BasicStroke(1.0f));
-            for (int x = -45 + offset; x < 950; x += 45) {
-                g2.drawLine(x, 0, x, 600);
+            for (int x = -45 + offset; x < width; x += 45) {
+                g2.drawLine(x, 0, x, height);
             }
-            for (int y = -45 + offset; y < 600; y += 45) {
-                g2.drawLine(0, y, 950, y);
+            for (int y = -45 + offset; y < height; y += 45) {
+                g2.drawLine(0, y, width, y);
             }
         }
 
-        // Floating Ambient Cyber Particles
+        // Floating Ambient Cyber Particles (Merentang penuh ke 1920x1080)
         if (vfxEnabled) {
-            for (int i = 0; i < 18; i++) {
-                float px = ((i * 137 + tick * (0.4f + (i % 3) * 0.2f)) % 950);
-                float py = 600 - ((i * 97 + tick * (0.6f + (i % 4) * 0.25f)) % 600);
+            for (int i = 0; i < 35; i++) {
+                float px = ((i * 137 + tick * (0.4f + (i % 3) * 0.2f)) % width);
+                float py = height - ((i * 97 + tick * (0.6f + (i % 4) * 0.25f)) % height);
                 int alpha = 40 + (int) (Math.sin(tick * 0.08 + i) * 30);
                 int size = 2 + (i % 3);
                 g2.setColor(i % 2 == 0 ? new Color(0, 215, 255, alpha) : new Color(185, 95, 255, alpha));

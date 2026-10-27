@@ -1,5 +1,6 @@
 package view.component.cyber;
 
+import engine.GameCanvas;
 import engine.GameState;
 
 import java.awt.*;
@@ -43,6 +44,11 @@ public class CyberTransitionEffect {
     public static void drawTransitionOverlay(Graphics2D g2) {
         if (!transitioning) return;
 
+        int width = GameCanvas.BASE_WIDTH;   // 1920
+        int height = GameCanvas.BASE_HEIGHT; // 1080
+        int centerX = width / 2;             // 960
+        int centerY = height / 2;            // 540
+
         float half = TRANSITION_MAX / 2.0f;
         float progress = (float) transitionTick / TRANSITION_MAX;
         float alphaFactor = (transitionTick <= half)
@@ -50,46 +56,54 @@ public class CyberTransitionEffect {
                 : (1.0f - (transitionTick - half) / half);
         alphaFactor = Math.max(0f, Math.min(1f, alphaFactor));
 
+        // 1. Overlay Dark Fullscreen Fade (1920x1080)
         int bgAlpha = (int) (alphaFactor * 245);
         g2.setColor(new Color(8, 11, 20, bgAlpha));
-        g2.fillRect(0, 0, 950, 600);
+        g2.fillRect(0, 0, width, height);
 
         if (alphaFactor > 0.25f) {
             int uiAlpha = (int) (Math.min(1f, (alphaFactor - 0.2f) * 1.3f) * 255);
             long tick = System.currentTimeMillis() / 16;
 
-            // Rotating Cyber Spinner
+            // 2. Rotating Cyber Spinner (Pusat Layar X: 960, Y: 500)
             AffineTransform old = g2.getTransform();
             Stroke oldStroke = g2.getStroke();
-            g2.translate(475, 265);
+            
+            g2.translate(centerX, centerY - 40);
+            
+            // Outer Ring Spinner
             g2.rotate(tick * 0.14);
             g2.setColor(new Color(0, 215, 255, uiAlpha));
-            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.drawArc(-28, -28, 56, 56, 0, 120);
-            g2.drawArc(-28, -28, 56, 56, 180, 120);
+            g2.setStroke(new BasicStroke(4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.drawArc(-50, -50, 100, 100, 0, 120);
+            g2.drawArc(-50, -50, 100, 100, 180, 120);
 
+            // Inner Ring Spinner
             g2.rotate(-tick * 0.26);
             g2.setColor(new Color(255, 205, 0, uiAlpha));
-            g2.setStroke(new BasicStroke(2.2f));
-            g2.drawArc(-18, -18, 36, 36, 45, 90);
-            g2.drawArc(-18, -18, 36, 36, 225, 90);
+            g2.setStroke(new BasicStroke(3.0f));
+            g2.drawArc(-32, -32, 64, 64, 45, 90);
+            g2.drawArc(-32, -32, 64, 64, 225, 90);
+            
             g2.setTransform(old);
             g2.setStroke(oldStroke);
 
-            // Loading Label
-            g2.setFont(new Font("SansSerif", Font.BOLD, 14));
+            // 3. Loading Label Text (Centered)
+            g2.setFont(new Font("SansSerif", Font.BOLD, 22));
             FontMetrics fm = g2.getFontMetrics();
             g2.setColor(new Color(220, 240, 255, uiAlpha));
-            g2.drawString(loadingLabel, 475 - fm.stringWidth(loadingLabel) / 2, 322);
+            g2.drawString(loadingLabel, centerX - fm.stringWidth(loadingLabel) / 2, centerY + 50);
 
-            // Progress Bar
-            int barW = 240;
-            int barX = 475 - barW / 2;
-            int barY = 335;
+            // 4. Progress Bar Accent Line
+            int barW = 480;
+            int barX = centerX - barW / 2;
+            int barY = centerY + 80;
+            
             g2.setColor(new Color(30, 40, 60, uiAlpha));
-            g2.fillRoundRect(barX, barY, barW, 8, 6, 6);
+            g2.fillRoundRect(barX, barY, barW, 12, 8, 8);
+            
             g2.setColor(new Color(0, 215, 255, uiAlpha));
-            g2.fillRoundRect(barX, barY, (int) (barW * progress), 8, 6, 6);
+            g2.fillRoundRect(barX, barY, (int) (barW * progress), 12, 8, 8);
         }
     }
 }

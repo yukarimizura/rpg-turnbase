@@ -1,4 +1,4 @@
-Ben;1200;8060;2;21
+Ben;80;8060;2;1
 HERO;HERO_559;Dawn Blade Dancer;SR;Blade Dancer;Attacker;15;6100;900;320
 HERO;HERO_1477;R Guardian Shield;R;Guardian Shield;Defender;1;1500;80;54
 HERO;HERO_1478;R Cleric Grace;R;Cleric Grace;Healer;1;1100;100;30
@@ -21,3 +21,10 @@ HERO;HERO_5917_108;R Spellcaster;R;Spellcaster;Attacker;1;900;140;30
 HERO;HERO_5917_109;R Chronomancer;R;Chronomancer;Support;1;1000;100;30
 HERO;HERO_5917_110;SR Cleric Grace;SR;Cleric Grace;Healer;1;1650;170;45
 HERO;HERO_3473_101;R Chronomancer;R;Chronomancer;Support;1;1000;100;30
+HERO;HERO_2213_101;R Cleric Grace;R;Cleric Grace;Healer;1;1100;100;30
+HERO;HERO_3924_101;R Guardian Shield;R;Guardian Shield;Defender;1;1500;80;54
+HERO;HERO_7242_102;R Paladin Aegis;R;Paladin Aegis;Defender;1;1500;80;54
+HERO;HERO_8241_103;R Guardian Shield;R;Guardian Shield;Defender;1;1500;80;54
+HERO;HERO_8440_104;R Blade Dancer;R;Blade Dancer;Attacker;1;900;140;30
+HERO;HERO_8625_105;SSR Cleric Grace;SSR;Cleric Grace;Healer;1;2420;260;70
+HERO;HERO_8790_106;R Paladin Aegis;R;Paladin Aegis;Defender;1;1500;80;54

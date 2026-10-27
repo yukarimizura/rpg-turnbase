@@ -1,5 +1,6 @@
 package engine.handlers;
 
+import engine.GameCanvas;
 import engine.GameState;
 import engine.handlers.click.ProfileClickHandler;
 import service.*;
@@ -7,8 +8,7 @@ import view.component.CyberUIEffects;
 import view.screen.PartyScreen;
 
 import javax.swing.*;
-import java.awt.Container;
-import java.awt.Point;
+import java.awt.*;
 import java.util.List;
 
 public class CanvasClickHandler {
@@ -49,14 +49,63 @@ public class CanvasClickHandler {
             SaveManager.saveGame(profile, party, stage, gacha);
         } else if (state == GameState.SETTINGS) {
             if (btn.btnBack.contains(m)) CyberUIEffects.startTransition(GameState.LOBBY, "RETURNING TO COMMAND HUB...");
+            
             if (btn.btnToggleVfx.contains(m)) {
                 CyberUIEffects.vfxEnabled = !CyberUIEffects.vfxEnabled;
                 btn.btnToggleVfx.setText("VFX PARTICLES: " + (CyberUIEffects.vfxEnabled ? "ENABLED" : "DISABLED"));
             }
-            if (btn.btnSaveGame.contains(m)) { SaveManager.saveGame(profile, party, stage, gacha); JOptionPane.showMessageDialog(canvas, "Progress saved!"); }
+            
+            if (btn.btnSaveGame.contains(m)) { 
+                SaveManager.saveGame(profile, party, stage, gacha); 
+                JOptionPane.showMessageDialog(canvas, "Progress saved!"); 
+            }
+
+            // PERBAIKAN: Penanganan Resolusi Fullscreen Native (1080p) vs Windowed HD (1280x720)
             if (btn.btnResStandard.contains(m) || btn.btnResHD.contains(m)) {
-                Container top = SwingUtilities.getWindowAncestor(canvas);
-                if (top != null) top.setSize(btn.btnResStandard.contains(m) ? 950 : 1280, btn.btnResStandard.contains(m) ? 630 : 750);
+                Window top = SwingUtilities.getWindowAncestor(canvas);
+                if (top instanceof JFrame) {
+                    JFrame frame = (JFrame) top;
+                    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+                    boolean isFullscreenTarget = btn.btnResStandard.contains(m); // Tombol Fullscreen Native 1080p
+
+                    frame.dispose(); // Wajib dispose() sebelum mengubah status undecorated frame
+
+                    if (isFullscreenTarget) {
+                        // 1. FULLSCREEN NATIVE MODE
+                        frame.setUndecorated(true);
+                        frame.setResizable(false);
+                        
+                        if (gd.isFullScreenSupported()) {
+                            gd.setFullScreenWindow(frame);
+                        } else {
+                            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                            frame.setBounds(0, 0, screenSize.width, screenSize.height);
+                        }
+                    } else {
+                        // 2. WINDOWED MODE (1280x720)
+                        if (gd.getFullScreenWindow() == frame) {
+                            gd.setFullScreenWindow(null); // Keluar dari Hardware Fullscreen
+                        }
+                        frame.setUndecorated(false);
+                        frame.setResizable(true);
+                        
+                        canvas.setPreferredSize(new Dimension(1280, 720));
+                        frame.pack();
+                        frame.setLocationRelativeTo(null); // Posisikan window di tengah layar
+                        frame.setVisible(true);
+                    }
+
+                    // Re-validate & Re-paint canvas Swing agar viewport langsung update penuh
+                    if (canvas instanceof GameCanvas) {
+                        ((GameCanvas) canvas).updateCanvasBounds(frame.getWidth(), frame.getHeight());
+                    } else {
+                        canvas.revalidate();
+                        canvas.repaint();
+                    }
+                    canvas.requestFocusInWindow();
+                }
             }
         } else if (state == GameState.BATTLE && btn.btnBack.contains(m)) {
             CyberUIEffects.startTransition(GameState.LOBBY, "RETREATING TO COMMAND HUB...");

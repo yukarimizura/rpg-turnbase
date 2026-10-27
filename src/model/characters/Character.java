@@ -15,14 +15,17 @@ public abstract class Character implements SkillAction {
     // Buff Modifiers
     public int bonusDefTimer = 0, bonusDefAmount = 0, bonusAtkTimer = 0, bonusAtkAmount = 0;
 
-    // Realtime 2D Physics
-    public float x = 200, y = 200, vx, vy, speed = 4.0f;
+    // Realtime 2D Physics - Default spawn di pusat layar 1920x1080 (960, 540)
+    public float x = 960, y = 540, vx, vy, speed = 4.0f;
     public int size = 32;
 
     // Cooldown Timers
     public int skillCdMax = 180, skillCdCurrent = 0, ultCdMax = 600, ultCdCurrent = 0;
     public int iFrameTimer = 0;
     public static final int IFRAME_DURATION = 35;
+    public int autoAttackCdMax = 40;
+    public int autoAttackCdCurrent = 0;
+    public int attackRange = 120;
 
     public Character(String id, String name, String rarity, String subRole, int maxHp, int attack, int defense) {
         this.id = id;
@@ -35,7 +38,10 @@ public abstract class Character implements SkillAction {
         this.defense = defense;
     }
 
-    public void tickCooldown() { CharacterCombatHelper.tickTimers(this); }
+    public void tickCooldown() { 
+    		CharacterCombatHelper.tickTimers(this);
+    		if ( autoAttackCdCurrent > 0 ) autoAttackCdCurrent--;
+    	}
     public void updatePhysics() { CharacterCombatHelper.clampArenaBounds(this); }
 
     public void applyDefBuff(int bonus, int durationTicks) {
@@ -95,5 +101,6 @@ public abstract class Character implements SkillAction {
     public int getMaxHp() { return maxHp; }
     public int getAttack() { return attack + bonusAtkAmount; }
     public int getDefense() { return defense + bonusDefAmount; }
+    public float getMoveSpeed() { return speed; }
     public boolean isAlive() { return currentHp > 0; }
 }

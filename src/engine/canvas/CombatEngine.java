@@ -1,5 +1,6 @@
 package engine.canvas;
 
+import engine.GameCanvas;
 import engine.GameState;
 import engine.InputHandler;
 import engine.canvas.combat.EnemyCombatProcessor;
@@ -44,10 +45,17 @@ public class CombatEngine {
         if (hero == null || party.isAllPartyDead()) return GameState.GAME_OVER;
 
         resonance.updateResonance(party, hero, vfxList, damageTexts);
+        
+        // Input Movement WASD
         hero.vx = (input.left ? -hero.speed : 0) + (input.right ? hero.speed : 0);
         hero.vy = (input.up ? -hero.speed : 0) + (input.down ? hero.speed : 0);
         hero.updatePhysics();
 
+        // Clamping posisi player di arena 1920x1080 (menghindari HUD Atas & Bawah)
+        hero.x = Math.max(80, Math.min(GameCanvas.BASE_WIDTH - 80, hero.x));
+        hero.y = Math.max(220, Math.min(GameCanvas.BASE_HEIGHT - 220, hero.y));
+
+        // Cast Skill [Q]
         if (input.skillCast && hero.skillCdCurrent == 0) {
             vfxList.add(new VFXEffect(hero.x, hero.y, 85, Color.CYAN));
             hero.castSkill(enemies);
@@ -55,6 +63,8 @@ public class CombatEngine {
             CyberUIEffects.triggerShake(6, 3.5f);
             input.skillCast = false;
         }
+        
+        // Cast Ultimate [R]
         if (input.ultCast && hero.ultCdCurrent == 0) {
             vfxList.add(new VFXEffect(hero.x, hero.y, 165, Color.YELLOW));
             hero.castUltimate(enemies);
@@ -63,11 +73,15 @@ public class CombatEngine {
             input.ultCast = false;
         }
 
+        // Panggil Boss Stage dengan tombol [B] (Spawn di Titik Pusat Arena 960, 480)
         if (input.bossChallengeKey && stage.canChallengeBoss(party.getActiveParty()) && !stage.isBossActive()) {
             enemies.clear();
-            enemies.add(new Enemy(475, 200, true, stage.getCurrentStage()));
+            float bossSpawnX = GameCanvas.BASE_WIDTH / 2.0f;  // 960
+            float bossSpawnY = GameCanvas.BASE_HEIGHT / 2.0f - 60; // 480 (Sedikit di atas pusat)
+            
+            enemies.add(new Enemy(bossSpawnX, bossSpawnY, true, stage.getCurrentStage()));
             stage.startBossBattle();
-            vfxList.add(new VFXEffect(475, 200, 160, Color.RED));
+            vfxList.add(new VFXEffect(bossSpawnX, bossSpawnY, 220, Color.RED));
             CyberUIEffects.triggerShake(18, 9.0f);
             input.bossChallengeKey = false;
         }
@@ -78,6 +92,7 @@ public class CombatEngine {
         damageTexts.removeIf(dt -> { dt.update(); return dt.isExpired(); });
         vfxList.removeIf(vfx -> { vfx.update(); return vfx.isExpired(); });
         if (enemies.isEmpty() && !stage.isBossActive()) onRespawnCreeps.run();
+        
         return GameState.BATTLE;
     }
 }
